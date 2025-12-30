@@ -2,13 +2,14 @@
   "name": "mp3-song-info-editor",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.26.2",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "cross-env NODE_ENV=production NEXT_PUBLIC_BASE_PATH=/mp3-song-info-editor next build",
     "lint": "eslint"
   },
   "dependencies": {
+    "cross-env": "^7.0.3",
     "next": "16.1.1",
     "pnpm": "^10.26.2",
     "react": "19.2.3",
