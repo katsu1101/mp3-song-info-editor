@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "cross-env": "^7.0.3",
+    "jsmediatags": "^3.9.7",
     "next": "16.1.1",
     "pnpm": "^10.26.2",
     "react": "19.2.3",
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jsmediatags": "^3.9.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

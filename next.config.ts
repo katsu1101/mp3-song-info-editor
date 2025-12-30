@@ -1,7 +1,11 @@
-import type { NextConfig } from "next";
+import type {NextConfig} from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    resolveAlias: {
+      "react-native-fs": "./src/shims/empty.ts",
+    },
+  },
 };
 
 export default nextConfig;

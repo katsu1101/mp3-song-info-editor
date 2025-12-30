@@ -4,4 +4,6 @@ export type Mp3Entry = {
   name: string;
   size: number;
   lastModified: number;
+
+  fileHandle: FileSystemFileHandle;
 };

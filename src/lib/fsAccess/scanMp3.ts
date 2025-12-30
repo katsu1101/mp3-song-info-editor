@@ -18,12 +18,14 @@ export const readMp3FromDirectory = async (
     if (handle.kind === "file") {
       if (!name.toLowerCase().endsWith(".mp3")) continue;
 
-      const file = await (handle as FileSystemFileHandle).getFile();
+      const fileHandle = handle as FileSystemFileHandle;
+      const file = await fileHandle.getFile();
       entries.push({
         path: currentPath,
         name: file.name,
         size: file.size,
         lastModified: file.lastModified,
+        fileHandle, // ★追加
       });
       continue;
     }
