@@ -1,4 +1,5 @@
-import jsMediaTags from "jsmediatags";
+import jsMediaTags      from "jsmediatags";
+import {normalizeTitle} from "./mojibake";
 
 export type Mp3Meta = {
   title: string | null;
@@ -66,10 +67,7 @@ export const readMp3Meta = (file: File): Promise<Mp3Meta> =>
         const tags = (result as unknown as JsMediaTagsResult).tags ?? {};
 
         const titleRaw = tags.title;
-        const title =
-          typeof titleRaw === "string" && titleRaw.trim()
-            ? titleRaw.trim()
-            : null;
+        const title = normalizeTitle(titleRaw);
 
         const coverUrl = pictureToObjectUrl(tags.picture);
 
