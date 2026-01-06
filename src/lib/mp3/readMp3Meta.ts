@@ -1,78 +1,85 @@
-import jsMediaTags      from "jsmediatags";
-import {normalizeTitle} from "./mojibake";
+import {TrackMeta} from "@/hooks/src/types/trackMeta";
+import jsMediaTags from "jsmediatags";
 
-export type Mp3Meta = {
-  title: string | null;
-  coverUrl: string | null;
+type JsMediaTagsPicture = {
+  format?: string;
+  data?: number[]; // jsmediatags は number[] のことが多い
 };
 
-type Tags = {
+type JsMediaTags = {
   title?: unknown;
-  picture?: unknown;
+  artist?: unknown;
+  album?: unknown;
+  track?: unknown; // "1/12" や "1" が来ることがある
+  picture?: JsMediaTagsPicture;
 };
 
-type JsMediaTagsResult = {
-  tags?: Tags;
+const toNullableString = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
-const isNumberArrayFast = (value: unknown): value is number[] => {
-  if (!Array.isArray(value)) return false;
-  if (value.length === 0) return false;
+const toNullableTrackNo = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
 
-  // 全走査は重いので先頭だけ軽く確認
-  const sampleCount = Math.min(32, value.length);
-  for (let i = 0; i < sampleCount; i += 1) {
-    if (typeof value[i] !== "number") return false;
+  if (typeof value === "string") {
+    // "03" / "3/12" / "3 / 12" などを許容して先頭の数字だけ拾う
+    const match = value.trim().match(/^(\d+)/);
+    if (!match) return null;
+    const n = Number(match[1]);
+    return Number.isFinite(n) ? n : null;
   }
-  return true;
-};
-
-const toUint8Array = (data: unknown): Uint8Array | null => {
-  if (data instanceof Uint8Array) return data;
-
-  // Int8Array / Uint16Array など TypedArray 全般
-  if (ArrayBuffer.isView(data)) {
-    return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  }
-
-  if (data instanceof ArrayBuffer) return new Uint8Array(data);
-
-  if (isNumberArrayFast(data)) return new Uint8Array(data);
 
   return null;
 };
+const toCoverObjectUrl = (picture: JsMediaTagsPicture | undefined): string | null => {
+  if (!picture?.data || picture.data.length === 0) return null;
 
-const pictureToObjectUrl = (picture: unknown): string | null => {
-  if (!picture || typeof picture !== "object") return null;
-  const record = picture as Record<string, unknown>;
+  const bytes = new Uint8Array(picture.data);
+  const mimeType = typeof picture.format === "string" && picture.format.trim().length > 0
+    ? picture.format
+    : "image/jpeg";
 
-  const format = record["format"];
-  const data = record["data"];
-
-  if (typeof format !== "string") return null;
-
-  const bytes = toUint8Array(data);
-  if (!bytes) return null;
-
-  // bytes が ArrayBufferLike 背負いでも、ここで ArrayBuffer にコピーされます
-  const safeBytes = new Uint8Array(bytes);
-  const blob = new Blob([safeBytes], {type: format});
+  const blob = new Blob([bytes], {type: mimeType});
   return URL.createObjectURL(blob);
 };
 
-export const readMp3Meta = (file: File): Promise<Mp3Meta> =>
-  new Promise((resolve) => {
+const readTags = (file: File): Promise<JsMediaTags> => {
+  return new Promise((resolve, reject) => {
     jsMediaTags.read(file, {
-      onSuccess: (result) => {
-        const tags = (result as unknown as JsMediaTagsResult).tags ?? {};
-
-        const titleRaw = tags.title;
-        const title = normalizeTitle(titleRaw);
-
-        const coverUrl = pictureToObjectUrl(tags.picture);
-
-        resolve({title, coverUrl});
+      onSuccess: (result) => resolve(result.tags as JsMediaTags),
+      onError: (error) => {
+        // error: { type, info }
+        const message =
+          typeof error?.type === "string"
+            ? `${error.type}: ${String(error.info ?? "")}`.trim()
+            : String(error);
+        reject(new Error(message));
       },
-      onError: () => resolve({title: null, coverUrl: null}),
     });
   });
+};
+
+export const readMp3Meta = async (file: File): Promise<TrackMeta> => {
+  try {
+    const tags = await readTags(file);
+
+    return {
+      title: toNullableString(tags.title),
+      artist: toNullableString(tags.artist),
+      album: toNullableString(tags.album),
+      trackNo: toNullableTrackNo(tags.track),
+      coverUrl: toCoverObjectUrl(tags.picture),
+    };
+  } catch {
+    // 失敗しても UI を壊さない：空メタで返す
+    return {
+      title: null,
+      artist: null,
+      album: null,
+      trackNo: null,
+      coverUrl: null,
+    };
+  }
+};

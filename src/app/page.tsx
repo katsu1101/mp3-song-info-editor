@@ -22,7 +22,7 @@ export default function Page() {
     mp3List,
     folderName,
     errorMessage,
-    titleByPath,
+    metaByPath,        // ✅ 追加（title/album/trackNo/artist 等は全部ここ）
     coverUrlByPath,
     dirCoverUrlByDir, // ✅ 追加
     pickFolderAndLoad,
@@ -36,7 +36,7 @@ export default function Page() {
 
   const trackViews = useTrackViews({
     mp3List,
-    titleByPath,
+    metaByPath,        // ✅ ここだけでOK
     coverUrlByPath,
     dirCoverUrlByDir, // ✅ 渡す
     mappingByPrefixId,

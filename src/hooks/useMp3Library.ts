@@ -8,7 +8,9 @@ import {clearDirectoryHandle, loadDirectoryHandle, saveDirectoryHandle} from "@/
 import {readMp3FromDirectory}                                           from "@/lib/fsAccess/scanMp3";
 import {readMp3Meta}                                                    from "@/lib/mp3/readMp3Meta";
 import type {Mp3Entry}                                                  from "@/types";
-import {useEffect, useMemo, useState}                                   from "react";
+
+import {useEffect, useMemo, useState} from "react";
+import {TrackMetaByPath}              from "./src/types/trackMeta";
 
 const canReadNow = async (handle: FileSystemDirectoryHandle): Promise<boolean> => {
   if (!handle.queryPermission) return true;
@@ -66,7 +68,7 @@ const findFirstImageFileHandle = async (
     candidates.push({name, handle: entry as FileSystemFileHandle});
   }
 
-  // ✅ 再現性のためファイル名でソート（「列挙順そのまま」が良ければ、このsortを消してOK）
+  // 再現性のためファイル名でソート
   candidates.sort((a, b) => a.name.localeCompare(b.name, "ja"));
 
   return candidates[0]?.handle ?? null;
@@ -80,7 +82,8 @@ export const useMp3Library = () => {
   const [savedHandle, setSavedHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [needsReconnect, setNeedsReconnect] = useState(false);
 
-  const [titleByPath, setTitleByPath] = useState<Record<string, string | null>>({});
+  // ✅ TrackMeta を一括管理（path -> meta）
+  const [metaByPath, setMetaByPath] = useState<TrackMetaByPath>({});
 
   // ✅ MP3埋め込みジャケット（曲ごと）
   const covers = useObjectUrlStore();
@@ -93,11 +96,30 @@ export const useMp3Library = () => {
     [mp3List]
   );
 
+  // ✅ 互換用（既存コードが titleByPath / albumByPath / trackNoByPath を参照している間はこれでOK）
+  const titleByPath = useMemo<Record<string, string | null>>(() => {
+    const out: Record<string, string | null> = {};
+    for (const [path, meta] of Object.entries(metaByPath)) out[path] = meta?.title ?? null;
+    return out;
+  }, [metaByPath]);
+
+  const albumByPath = useMemo<Record<string, string | null>>(() => {
+    const out: Record<string, string | null> = {};
+    for (const [path, meta] of Object.entries(metaByPath)) out[path] = meta?.album ?? null;
+    return out;
+  }, [metaByPath]);
+
+  const trackNoByPath = useMemo<Record<string, number | null>>(() => {
+    const out: Record<string, number | null> = {};
+    for (const [path, meta] of Object.entries(metaByPath)) out[path] = meta?.trackNo ?? null;
+    return out;
+  }, [metaByPath]);
+
   const resetView = () => {
     setErrorMessage("");
     setMp3List([]);
     setFolderName("");
-    setTitleByPath({});
+    setMetaByPath({});
     covers.clearAll();
     dirCovers.clearAll();
   };
@@ -126,12 +148,18 @@ export const useMp3Library = () => {
       });
     })();
 
-    // ✅ MP3メタは後追い（タイトル/埋め込みジャケット）
+    // ✅ MP3メタは後追い（TrackMeta へ集約）
     void runWithConcurrency(items, 2, async (entry) => {
       const file = await entry.fileHandle.getFile();
-      const meta = await readMp3Meta(file);
-      setTitleByPath((prev) => ({...prev, [entry.path]: meta.title}));
+      const meta = await readMp3Meta(file); // TrackMeta を返す想定
+
+      // coverUrl の objectURL は store に管理させる（差し替え時に revoke できる）
       covers.setUrl(entry.path, meta.coverUrl);
+
+      setMetaByPath((prev) => ({
+        ...prev,
+        [entry.path]: meta,
+      }));
     });
   };
 
@@ -213,10 +241,18 @@ export const useMp3Library = () => {
     folderName,
     errorMessage,
     totalSize,
-    titleByPath,
 
+    // ✅ TrackMeta 本体
+    metaByPath,
+
+    // ✅ 互換（既存の useTrackViews/Page が参照しているなら残す）
+    titleByPath,
+    albumByPath,
+    trackNoByPath,
+
+    // ✅ カバーURL（曲/フォルダ）
     coverUrlByPath: covers.urlByKey,
-    dirCoverUrlByDir: dirCovers.urlByKey, // ✅ 追加
+    dirCoverUrlByDir: dirCovers.urlByKey,
 
     savedHandle,
     needsReconnect,

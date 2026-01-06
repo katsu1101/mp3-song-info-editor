@@ -1,5 +1,6 @@
 "use client";
 
+import {TrackView}                           from "@/hooks/useTrackViews";
 import Image                                 from "next/image";
 import React, {useEffect, useMemo, useState} from "react";
 
@@ -8,20 +9,9 @@ type NowPlayingInfo = {
   path: string;
 };
 
-type TrackItem = { path: string };
-
-type TrackViewLike = {
-  item: TrackItem;
-  index: number;
-  displayTitle: string;
-  releaseOrder: string;
-  originalArtist?: string | null;
-  coverUrl?: string | null;
-};
-
 type NowPlayingPanelProps = {
   nowPlaying: NowPlayingInfo | null;
-  trackViews: readonly TrackViewLike[];
+  trackViews: readonly TrackView[];
 
   audioRef: React.RefObject<HTMLAudioElement | null>;
 
@@ -59,7 +49,7 @@ export function NowPlayingPanel(props: NowPlayingPanelProps) {
   const title = nowTrackView?.displayTitle ?? nowPlaying?.title ?? "未再生";
   const coverUrl = nowTrackView?.coverUrl ?? null;
 
-  const releaseOrder = nowTrackView?.releaseOrder ?? "—";
+  const releaseOrder = nowTrackView?.orderLabel ?? "—";
   const originalArtist = nowTrackView?.originalArtist ?? "—";
 
   const filePath = nowPlaying?.path ?? "";

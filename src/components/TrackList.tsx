@@ -1,23 +1,11 @@
 "use client";
 
-import Image from "next/image";
-import React from "react";
-
-type TrackItem = {
-  path: string;
-};
-
-export type TrackViewLike = {
-  item: TrackItem;
-  index: number;
-  displayTitle: string;
-  releaseOrder: string;
-  originalArtist?: string | null;
-  coverUrl?: string | null;
-};
+import {TrackView} from "@/hooks/useTrackViews";
+import Image       from "next/image";
+import React       from "react";
 
 type TrackListProps = {
-  trackViews: readonly TrackViewLike[];
+  trackViews: readonly TrackView[];
   showFilePath: boolean;
 
   onPlayAtIndexAction: (index: number) => void | Promise<void>;
@@ -63,7 +51,7 @@ export function TrackList(props: TrackListProps) {
                 <col key="title"/>,
 
                 // ✅ 右側は “狭い時は縮む / 広い時は広がりすぎない” clamp が強い
-                <col key="ym" style={{width: "clamp(60px, 9vw, 100px)"}}/>,
+                <col key="ym" style={{width: "clamp(80px, 9vw, 120px)"}}/>,
                 <col key="orig" style={{width: "clamp(60px, 9vw, 100px)"}}/>,
 
                 ...(showFilePath ? [<col key="path" style={{width: 260}}/>] : []),
@@ -76,7 +64,7 @@ export function TrackList(props: TrackListProps) {
               <th style={thStyle} aria-label="ジャケット"/>
               <th style={{...thStyle, textAlign: "right"}}>再生</th>
               <th style={thStyle}>曲名</th>
-              <th style={thStyle}>年月/順</th>
+              <th style={thStyle}>アルバム</th>
               <th style={thStyle}>原曲</th>
               {showFilePath ? <th style={thStyle}>ファイル</th> : null}
             </tr>
@@ -85,7 +73,7 @@ export function TrackList(props: TrackListProps) {
             <tbody>
             {trackViews.map((t) => {
               const isNowPlaying = nowPlayingPath === t.item.path;
-              const releaseText = t.releaseOrder;
+              const releaseText = t.orderLabel;
               const originalText = t.originalArtist ?? "";
 
               return (
