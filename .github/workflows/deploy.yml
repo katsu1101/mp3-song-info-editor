@@ -1,0 +1,54 @@
+name: Deploy (Next.js static) to gh-pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # cache: pnpm  ← ここは消す（pnpm未導入だと落ちる）
+
+      - name: Setup pnpm (with cache)
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.2
+          # cache: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # basePath を env で渡すなら、package.json の build からハードコードを消すのがベスト（後述）
+      - name: Set NEXT_PUBLIC_BASE_PATH (optional)
+        run: echo "NEXT_PUBLIC_BASE_PATH=/${{ github.event.repository.name }}" >> $GITHUB_ENV
+
+      - name: Build (static export -> out/)
+        run: pnpm run build
+
+      - name: Disable Jekyll
+        run: touch out/.nojekyll
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./out
+          force_orphan: true

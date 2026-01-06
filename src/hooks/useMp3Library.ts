@@ -5,12 +5,12 @@ import {useObjectUrlStore} from "@/hooks/useObjectUrlStore";
 
 import {runWithConcurrency}                                             from "@/lib/async/runWithConcurrency";
 import {clearDirectoryHandle, loadDirectoryHandle, saveDirectoryHandle} from "@/lib/fsAccess/dirHandleStore";
-import {readMp3FromDirectory}                                           from "@/lib/fsAccess/scanMp3";
-import {readMp3Meta}                                                    from "@/lib/mp3/readMp3Meta";
-import type {Mp3Entry}                                                  from "@/types";
+import {readMp3FromDirectory} from "@/lib/fsAccess/scanMp3";
+import {Mp3Meta, readMp3Meta} from "@/lib/mp3/readMp3Meta";
+import type {Mp3Entry}        from "@/types";
 
 import {useEffect, useMemo, useState} from "react";
-import {TrackMetaByPath}              from "./src/types/trackMeta";
+import {TrackMeta, TrackMetaByPath} from "./src/types/trackMeta";
 
 const canReadNow = async (handle: FileSystemDirectoryHandle): Promise<boolean> => {
   if (!handle.queryPermission) return true;
@@ -124,6 +124,17 @@ export const useMp3Library = () => {
     dirCovers.clearAll();
   };
 
+  const toTrackMeta = (meta: Mp3Meta, coverUrl: string | null): TrackMeta => {
+    return {
+      title: meta.title ?? "",
+      artist: meta.artist ?? "",
+      album: meta.album ?? "",
+      trackNo: meta.trackNo ?? null,
+      // year: meta.year ?? null,
+      coverUrl, // ← TrackMeta 側が string | null を想定してるならこれでOK
+    };
+  };
+
   const buildList = async (handle: FileSystemDirectoryHandle) => {
     setFolderName(handle.name);
 
@@ -154,11 +165,14 @@ export const useMp3Library = () => {
       const meta = await readMp3Meta(file); // TrackMeta を返す想定
 
       // coverUrl の objectURL は store に管理させる（差し替え時に revoke できる）
-      covers.setUrl(entry.path, meta.coverUrl);
+      const coverUrl: string | null = createCoverObjectUrl(meta.picture);
+      covers.setUrl(entry.path, coverUrl ?? null);
+
+      const trackMeta: TrackMeta = toTrackMeta(meta, coverUrl);
 
       setMetaByPath((prev) => ({
         ...prev,
-        [entry.path]: meta,
+        [entry.path]: trackMeta,
       }));
     });
   };
@@ -261,4 +275,19 @@ export const useMp3Library = () => {
     reconnect,
     forget,
   };
+};
+
+// useMp3Library.ts（適当な場所にヘルパー追加）
+const createCoverObjectUrl = (
+  picture?: { data: Uint8Array; format: string },
+): string | null => {
+  if (!picture) return null;
+  if (typeof window === "undefined") return null;
+
+  // Uint8Array の「有効部分」だけを ArrayBuffer にコピーして Blob 化
+  const bytes = picture.data;
+  const arrayBuffer = bytes.slice().buffer; // slice() で新しい Uint8Array を作り、その buffer は ArrayBuffer になる
+
+  const blob = new Blob([arrayBuffer], { type: picture.format });
+  return URL.createObjectURL(blob);
 };
