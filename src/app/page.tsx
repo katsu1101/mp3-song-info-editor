@@ -2,6 +2,7 @@
 
 import {AppShell}          from "@/components/AppShell/AppShell";
 import {NowPlayingPanel}   from "@/components/NowPlayingPanel";
+import {useSettings}       from "@/components/Settings/SettingsProvider";
 import {SidebarStub}       from "@/components/Sidebar";
 import {TopBar}            from "@/components/TopBar";
 import {TrackList}         from "@/components/TrackList";
@@ -10,8 +11,6 @@ import {useFantiaMapping}  from "@/hooks/useFantiaMapping";
 import {useMp3Library}     from "@/hooks/useMp3Library";
 import {usePlaylistPlayer} from "@/hooks/usePlaylistPlayer";
 import {useTrackViews}     from "@/hooks/useTrackViews";
-import {useState}          from "react";
-
 
 export default function Page() {
   const {
@@ -22,23 +21,21 @@ export default function Page() {
     mp3List,
     folderName,
     errorMessage,
-    metaByPath,        // ✅ 追加（title/album/trackNo/artist 等は全部ここ）
+    metaByPath,
     coverUrlByPath,
-    dirCoverUrlByDir, // ✅ 追加
+    dirCoverUrlByDir,
     pickFolderAndLoad,
   } = useMp3Library();
 
   const {mappingByPrefixId, error: mappingError, isLoading: mappingLoading} = useFantiaMapping();
 
-  const [showFilePath, setShowFilePath] = useState<boolean>(false);
-
   const {audioRef, nowPlaying, playEntry, stop} = useAudioPlayer();
 
   const trackViews = useTrackViews({
     mp3List,
-    metaByPath,        // ✅ ここだけでOK
+    metaByPath,
     coverUrlByPath,
-    dirCoverUrlByDir, // ✅ 渡す
+    dirCoverUrlByDir,
     mappingByPrefixId,
   });
 
@@ -47,10 +44,8 @@ export default function Page() {
     const found = trackViews.find((t) => t.item.path === entry.path);
     return found ? found.displayTitle : null;
   };
-
+  const {settings} = useSettings();
   const {
-    isContinuous,
-    toggleContinuous,
     playAtIndex,
     playNext,
     playPrev,
@@ -62,6 +57,8 @@ export default function Page() {
     list,
     getTitle,
     resetKey: folderName, // フォルダ切替でindexリセット
+    isContinuous: settings.playback.continuous,
+    isShuffle: settings.playback.shuffle,
   });
 
   return (
@@ -75,12 +72,6 @@ export default function Page() {
           pickFolderAndLoadAction={pickFolderAndLoad}
           reconnectAction={reconnect}
           forgetAction={forget}
-          showFilePath={showFilePath}
-          setShowFilePathAction={setShowFilePath}
-
-          // ✅ 追加
-          isContinuous={isContinuous}
-          toggleContinuousAction={toggleContinuous}
         />
       }
       sidebar={<SidebarStub/>}
@@ -92,7 +83,6 @@ export default function Page() {
 
           <TrackList
             trackViews={trackViews}
-            showFilePath={showFilePath}
             onPlayAtIndexAction={playAtIndex}
             nowPlayingPath={nowPlaying?.path ?? null}
           />

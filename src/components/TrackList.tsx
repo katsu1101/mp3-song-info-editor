@@ -1,12 +1,12 @@
 "use client";
 
-import {TrackView} from "@/hooks/useTrackViews";
-import Image       from "next/image";
-import React       from "react";
+import {useSettings} from "@/components/Settings/SettingsProvider";
+import {TrackView}   from "@/hooks/useTrackViews";
+import Image         from "next/image";
+import React         from "react";
 
 type TrackListProps = {
   trackViews: readonly TrackView[];
-  showFilePath: boolean;
 
   onPlayAtIndexAction: (index: number) => void | Promise<void>;
 
@@ -14,7 +14,11 @@ type TrackListProps = {
 };
 
 export function TrackList(props: TrackListProps) {
-  const {trackViews, showFilePath, onPlayAtIndexAction, nowPlayingPath} = props;
+  const {trackViews, onPlayAtIndexAction, nowPlayingPath} = props;
+
+  const {settings} = useSettings();
+
+  const showFilePath = settings.ui.showFilePath;
 
   const THUMB = 20;
 

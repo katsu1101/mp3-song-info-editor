@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import {useSettings} from "@/components/Settings/SettingsProvider";
+import React         from "react";
 
 type TopBarProps = {
   title: string;
@@ -12,16 +13,15 @@ type TopBarProps = {
   pickFolderAndLoadAction: () => void;
   reconnectAction: () => void;
   forgetAction: () => void;
-
-  showFilePath: boolean;
-  setShowFilePathAction: React.Dispatch<React.SetStateAction<boolean>>;
-
-  // ✅ 追加
-  isContinuous: boolean;
-  toggleContinuousAction: () => void;
 };
 
 export function TopBar(props: TopBarProps) {
+  const {settings, toggleShowFilePath, toggleContinuous, toggleShuffle} = useSettings();
+
+  const showFilePath = settings.ui.showFilePath;
+  const isContinuous = settings.playback.continuous;
+  const isShuffle = settings.playback.shuffle;
+
   const {
     title,
     folderName,
@@ -30,12 +30,6 @@ export function TopBar(props: TopBarProps) {
     pickFolderAndLoadAction,
     reconnectAction,
     forgetAction,
-    showFilePath,
-    setShowFilePathAction,
-
-    // ✅ 追加
-    isContinuous,
-    toggleContinuousAction,
   } = props;
 
   const handleForget = () => {
@@ -140,11 +134,27 @@ export function TopBar(props: TopBarProps) {
               <input
                 type="checkbox"
                 checked={isContinuous}
-                onChange={toggleContinuousAction}
+                onChange={toggleContinuous}
                 style={{position: "absolute", inset: 0, opacity: 0, cursor: "pointer"}}
                 aria-label="連続再生の切り替え"
               />
               <span style={toggleKnobStyle(isContinuous)}/>
+            </span>
+            <span style={{fontSize: 12, opacity: 0.7}}>{isContinuous ? "ON" : "OFF"}</span>
+          </label>
+
+          {/* shuffle */}
+          <label style={{display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none"}}>
+            <span style={{fontSize: 12, opacity: 0.85}}>シャッフル</span>
+            <span style={toggleTrackStyle(isShuffle)}>
+              <input
+                type="checkbox"
+                checked={isShuffle}
+                onChange={toggleShuffle}
+                style={{position: "absolute", inset: 0, opacity: 0, cursor: "pointer"}}
+                aria-label="シャッフルの切り替え"
+              />
+              <span style={toggleKnobStyle(isShuffle)}/>
             </span>
             <span style={{fontSize: 12, opacity: 0.7}}>{isContinuous ? "ON" : "OFF"}</span>
           </label>
@@ -167,7 +177,7 @@ export function TopBar(props: TopBarProps) {
               <input
                 type="checkbox"
                 checked={showFilePath}
-                onChange={(e) => setShowFilePathAction(e.target.checked)}
+                onChange={() => toggleShowFilePath()}
                 style={{position: "absolute", inset: 0, opacity: 0, cursor: "pointer"}}
                 aria-label="ファイル名表示の切り替え"
               />

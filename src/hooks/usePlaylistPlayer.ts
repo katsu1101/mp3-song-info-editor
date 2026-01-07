@@ -10,23 +10,88 @@ type UsePlaylistPlayerArgs = {
   list: Mp3Entry[]; // 連続再生の並び順確定済み
   getTitle: (entry: Mp3Entry) => string | null;
   resetKey?: string; // フォルダ変更などでリセットしたい時に渡す
+  isContinuous: boolean;
+  isShuffle: boolean;
+};
+
+const randomInt = (maxExclusive: number): number => {
+  if (maxExclusive <= 0) return 0;
+
+  // crypto があればそれを優先（より安定）
+  const cryptoObj: Crypto | undefined = (globalThis as unknown as { crypto?: Crypto }).crypto;
+  if (cryptoObj?.getRandomValues) {
+    const buf = new Uint32Array(1);
+    cryptoObj.getRandomValues(buf);
+    return buf[0]! % maxExclusive;
+  }
+  return Math.floor(Math.random() * maxExclusive);
+};
+
+const shuffleArray = <T, >(items: readonly T[]): T[] => {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    const tmp = arr[i]!;
+    arr[i] = arr[j]!;
+    arr[j] = tmp;
+  }
+  return arr;
+};
+
+const buildShuffledQueue = (length: number, excludeIndex: number | null): number[] => {
+  const indices: number[] = [];
+  for (let i = 0; i < length; i++) {
+    if (excludeIndex !== null && i === excludeIndex) continue;
+    indices.push(i);
+  }
+  return shuffleArray(indices);
 };
 
 export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
-  const {audioRef, playEntry, stop, list, getTitle, resetKey} = args;
+  const {audioRef, playEntry, stop, list, getTitle, resetKey, isContinuous, isShuffle} = args;
 
-  const [isContinuous, setIsContinuous] = useState<boolean>(true);
 
   const currentIndexRef = useRef<number | null>(null);
+
   const isContinuousRef = useRef<boolean>(true);
+  const isShuffleRef = useRef<boolean>(false);
+
+  // シャッフル用：次に再生するキュー / 戻る用履歴
+  const shuffleQueueRef = useRef<number[]>([]);
+  const shuffleHistoryRef = useRef<number[]>([]);
 
   useEffect(() => {
     isContinuousRef.current = isContinuous;
   }, [isContinuous]);
 
+  useEffect(() => {
+    isShuffleRef.current = isShuffle;
+  }, [isShuffle]);
+
+  const syncShuffleQueue = useCallback(() => {
+    if (!isShuffleRef.current) return;
+    shuffleQueueRef.current = buildShuffledQueue(list.length, currentIndexRef.current);
+    shuffleHistoryRef.current = [];
+  }, [list.length]);
+
   const playAtIndex = useCallback(
     async (index: number): Promise<void> => {
       if (index < 0 || index >= list.length) return;
+
+      const prevIndex = currentIndexRef.current;
+
+      // シャッフル中：履歴とキューを整合
+      if (isShuffleRef.current) {
+        if (prevIndex !== null && prevIndex !== index) {
+          shuffleHistoryRef.current = [...shuffleHistoryRef.current, prevIndex];
+        }
+
+        // キューから選択済みを除去（クリック再生でも重複しない）
+        shuffleQueueRef.current = shuffleQueueRef.current.filter((i) => i !== index);
+
+        // もしキューが空になったら、残りを再構築（「最後まで行ったら止まる」挙動を保つなら再構築しない）
+        // 今回は “互換性優先” で「尽きたら止まる」に寄せるので、ここでは再構築しない。
+      }
 
       const entry = list[index];
       const title = getTitle(entry);
@@ -40,18 +105,38 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
   const playNext = useCallback(async (): Promise<void> => {
     const idx = currentIndexRef.current;
     if (idx === null) return;
+
+    // ✅ シャッフルONならキューから
+    if (isShuffleRef.current) {
+      const nextIndex = shuffleQueueRef.current.shift();
+      if (nextIndex === undefined) return; // これ以上なし（互換性：末尾で止まる）
+      await playAtIndex(nextIndex);
+      return;
+    }
+
+    // ✅ 通常
     await playAtIndex(idx + 1);
   }, [playAtIndex]);
 
   const playPrev = useCallback(async (): Promise<void> => {
     const idx = currentIndexRef.current;
     if (idx === null) return;
+
+    // ✅ シャッフルONなら履歴から
+    if (isShuffleRef.current) {
+      const prevIndex = shuffleHistoryRef.current.pop();
+      if (prevIndex === undefined) return;
+      await playAtIndex(prevIndex);
+      return;
+    }
+
+    // ✅ 通常
     await playAtIndex(idx - 1);
   }, [playAtIndex]);
 
   const stopAndReset = useCallback((): void => {
     stop();
-    // currentIndexRef.current = null;
+    // currentIndexRef.current = null; // ←互換のまま残す（必要なら外で制御）
   }, [stop]);
 
   // audio ended → 次へ（連続再生ON時）
@@ -61,24 +146,26 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
 
     const onEnded = () => {
       if (!isContinuousRef.current) return;
-
-      const idx = currentIndexRef.current;
-      if (idx === null) return;
-
-      const next = idx + 1;
-      if (next >= list.length) return;
-      void playAtIndex(next);
+      void playNext();
     };
 
     audio.addEventListener("ended", onEnded);
     return () => audio.removeEventListener("ended", onEnded);
-  }, [audioRef, list.length, playAtIndex]);
+  }, [audioRef, playNext]);
 
   // resetKey（フォルダ変更など）でプレイリスト位置をリセット
   useEffect(() => {
     if (resetKey === undefined) return;
     currentIndexRef.current = null;
+    shuffleQueueRef.current = [];
+    shuffleHistoryRef.current = [];
   }, [resetKey]);
+
+  // list が変わったら（曲数変動など）シャッフルキューを再生成
+  useEffect(() => {
+    if (!isShuffle) return;
+    syncShuffleQueue();
+  }, [isShuffle, syncShuffleQueue]);
 
   // キーボードショートカット
   useEffect(() => {
@@ -96,7 +183,7 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
         const hasSource = audio.currentSrc.length > 0;
 
         if (!audio.paused) {
-          audio.pause(); // 位置保持
+          audio.pause();
           return;
         }
 
@@ -127,19 +214,17 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [audioRef, list.length, playAtIndex, playNext, playPrev]);
 
-  const toggleContinuous = useCallback(() => {
-    setIsContinuous((v) => !v);
-  }, []);
-
   return useMemo(
     () => ({
       isContinuous,
-      toggleContinuous,
+
+      isShuffle,
+
       playAtIndex,
       playNext,
       playPrev,
       stopAndReset,
     }),
-    [isContinuous, toggleContinuous, playAtIndex, playNext, playPrev, stopAndReset]
+    [isContinuous, isShuffle,  playAtIndex, playNext, playPrev, stopAndReset]
   );
 };
