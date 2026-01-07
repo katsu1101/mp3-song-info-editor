@@ -33,6 +33,12 @@ type UseTrackViewsArgs = {
 
 const toTwoDigits = (n: number) => String(n).padStart(2, "0");
 
+const normalizeText = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 export const useTrackViews = (args: UseTrackViewsArgs): TrackView[] => {
   const {mp3List, metaByPath, coverUrlByPath, dirCoverUrlByDir, mappingByPrefixId} = args;
 
@@ -68,8 +74,10 @@ export const useTrackViews = (args: UseTrackViewsArgs): TrackView[] => {
       const releaseOrderLabel = buildReleaseOrderLabel(mapping) ?? "年月不明";
       const orderLabel = albumOrderLabel ?? releaseOrderLabel;
 
-      // ✅ 原曲：アーティストがあれば優先（無ければ mapping.originalArtist）
-      const originalArtist = meta?.artist ?? mapping?.originalArtist ?? null;
+      // ✅ 原曲（表示）は「タグのアーティストがあれば優先、なければ mapping の原曲」
+      const tagArtist = normalizeText(meta?.artist);
+      const mappingOriginal = normalizeText(mapping?.originalArtist);
+      const originalArtist = tagArtist ?? mappingOriginal;
 
       // cover：曲の埋め込み > フォルダ代表
       const dirPath = getDirname(item.path);
