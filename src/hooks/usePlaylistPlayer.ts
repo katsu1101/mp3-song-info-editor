@@ -1,6 +1,6 @@
-import {isTypingTarget}                                           from "@/lib/dom/isTypingTarget";
-import type {Mp3Entry}                                            from "@/types";
-import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {isTypingTarget}                                 from "@/lib/dom/isTypingTarget";
+import type {Mp3Entry}                                  from "@/types";
+import React, {useCallback, useEffect, useMemo, useRef} from "react";
 
 type UsePlaylistPlayerArgs = {
   audioRef: React.RefObject<HTMLAudioElement | null>;
@@ -225,6 +225,6 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
       playPrev,
       stopAndReset,
     }),
-    [isContinuous, isShuffle,  playAtIndex, playNext, playPrev, stopAndReset]
+    [isContinuous, isShuffle, playAtIndex, playNext, playPrev, stopAndReset]
   );
 };
