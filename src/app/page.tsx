@@ -19,7 +19,7 @@ export default function Page() {
   const {settings} = useSettings();
 
   // covers が何度変わっても、曲順は変えないために「曲順トリガー」を分離する
-  const [shuffleVersion, _] = React.useState(0);
+  const [shuffleVersion] = React.useState(0);
 
   const {
     mp3List,

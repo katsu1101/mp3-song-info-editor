@@ -91,7 +91,7 @@ export function TrackList(props: TrackListProps) {
             </thead>
 
             <tbody>
-            {trackViews.map((t) => {
+            {trackViews.map((t, index) => {
               const isNowPlaying = nowPlayingID === t.item.id;
               const releaseText = t.orderLabel;
               const originalText = t.originalArtist ?? "";
@@ -112,7 +112,7 @@ export function TrackList(props: TrackListProps) {
                     scrollMarginTop: 80,
                   }}
                 >
-                  <td>{t.item.id}</td>
+                  <td>{index + 1}</td>
                   {/* art */}
                   <td
                     style={{
@@ -152,7 +152,7 @@ export function TrackList(props: TrackListProps) {
                   <td style={{...tdStyle, padding: 0}}>
                     <div style={{display: "grid", placeItems: "center"}}>
                       <button
-                        onClick={() => void playActions.playAtIndex(t.item.id)}
+                        onClick={() => void playActions.playAtIndex(index)}
                         style={{
                           height: 20,
                           width: 28,

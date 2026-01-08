@@ -36,7 +36,7 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
     async (index: number): Promise<void> => {
       if (index < 0 || index >= trackViews.length) return;
 
-      const entry = trackViews.find((t) => t.item.id === index) ?? trackViews[0];
+      const entry = trackViews[index];
       const title = entry.item.name;
 
       currentIndexRef.current = index;
@@ -46,19 +46,19 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
   );
 
   const playNext = useCallback(async (): Promise<void> => {
-    const idx = currentIndexRef.current;
-    if (idx === null) return;
+    const index = currentIndexRef.current;
+    if (index === null) return;
 
     // ✅ 通常
-    await playAtIndex(idx + 1);
+    await playAtIndex(index + 1);
   }, [playAtIndex]);
 
   const playPrev = useCallback(async (): Promise<void> => {
-    const idx = currentIndexRef.current;
-    if (idx === null) return;
+    const index = currentIndexRef.current;
+    if (index === null) return;
 
     // ✅ 通常
-    await playAtIndex(idx - 1);
+    await playAtIndex(index - 1);
   }, [playAtIndex]);
 
   // audio ended → 次へ（連続再生ON時）
