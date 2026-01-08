@@ -152,7 +152,7 @@ export function TrackList(props: TrackListProps) {
                   <td style={{...tdStyle, padding: 0}}>
                     <div style={{display: "grid", placeItems: "center"}}>
                       <button
-                        onClick={() => void playActions.playAtIndex(t.index)}
+                        onClick={() => void playActions.playAtIndex(t.item.id)}
                         style={{
                           height: 20,
                           width: 28,

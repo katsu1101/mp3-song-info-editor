@@ -6,8 +6,9 @@ import {runWithConcurrency}                                             from "@/
 import {clearDirectoryHandle, loadDirectoryHandle, saveDirectoryHandle} from "@/lib/fsAccess/dirHandleStore";
 import {readMp3FromDirectory}                                           from "@/lib/fsAccess/scanMp3";
 import {Mp3Meta, readMp3Meta}                                           from "@/lib/mp3/readMp3Meta";
+import {shuffleArray}                                                   from "@/lib/shuffle";
 import type {Mp3Entry}                                                  from "@/types";
-import {useEffect, useState}                                            from "react";
+import React, {useEffect, useState}                                     from "react";
 import {TrackMeta, TrackMetaByPath}                                     from "./src/types/trackMeta";
 
 const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif"]);
@@ -84,7 +85,7 @@ const findFirstImageFileHandle = async (
   }
 
   // 再現性のためファイル名でソート
-  candidates.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  // candidates.sort((a, b) => a.name.localeCompare(b.name, "ja"));
 
   return candidates[0]?.handle ?? null;
 };
@@ -104,7 +105,7 @@ const createCoverObjectUrl = (
   return URL.createObjectURL(blob);
 };
 
-export const useMp3Library = () => {
+export const useMp3Library = (shuffle: boolean) => {
   const [mp3List, setMp3List] = useState<Mp3Entry[]>([]);
   const [folderName, setFolderName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -146,7 +147,14 @@ export const useMp3Library = () => {
   const buildList = async (handle: FileSystemDirectoryHandle) => {
     setFolderName(handle.name);
 
-    const items = await readMp3FromDirectory(handle, "");
+    let items = await readMp3FromDirectory(handle, "");
+
+    if (shuffle) {
+      items = shuffleArray(items)
+      for (let i = 0; i < items.length; i++) {
+        items[i].id = i + 1;
+      }
+    }
     setMp3List(items);
 
     // ✅ フォルダ代表画像（先に作っておく：表示フォールバック用）
@@ -280,3 +288,36 @@ export const useMp3Library = () => {
     } as SettingAction
   };
 };
+
+
+const samePaths = (a: readonly Mp3Entry[], b: readonly Mp3Entry[]) => {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]!.path !== b[i]!.path) return false;
+  }
+  return true;
+};
+
+export const useOrderedMp3List = (
+  mp3List: readonly Mp3Entry[],
+  shuffle: boolean,
+  shuffleVersion: number // 再シャッフル用トリガー
+): Mp3Entry[] => {
+  const [ordered, setOrdered] = React.useState<Mp3Entry[]>(() => [...mp3List]);
+
+  // mp3List の中身変化検出（参照が新しくても、内容が同じなら順番を維持したい用）
+  const fingerprint = React.useMemo(
+    () => mp3List.map((x) => x.path).join("\n"),
+    [mp3List]
+  );
+
+  React.useEffect(() => {
+    const next = shuffle
+      ? shuffleArray(mp3List)
+      : [...mp3List].sort((a, b) => a.path.localeCompare(b.path, "ja"));
+
+    setOrdered((prev) => (samePaths(prev, next) ? prev : next));
+  }, [fingerprint, mp3List, shuffle, shuffleVersion]);
+
+  return ordered;
+}

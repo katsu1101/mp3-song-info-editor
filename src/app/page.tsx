@@ -1,44 +1,55 @@
 "use client";
 
-import {AppShell}          from "@/components/AppShell/AppShell";
-import {NowPlayingPanel}   from "@/components/NowPlayingPanel";
-import {useSettings}       from "@/components/Settings/SettingsProvider";
-import {SidebarStub}       from "@/components/Sidebar";
-import {TopBar}            from "@/components/TopBar";
-import {TrackList}         from "@/components/TrackList";
-import {useAudioPlayer}    from "@/hooks/useAudioPlayer";
-import {useFantiaMapping}  from "@/hooks/useFantiaMapping";
-import {useMp3Library}     from "@/hooks/useMp3Library";
-import {usePlaylistPlayer} from "@/hooks/usePlaylistPlayer";
-import {useTrackViews}     from "@/hooks/useTrackViews";
+import {AppShell}                         from "@/components/AppShell/AppShell";
+import {NowPlayingPanel}                  from "@/components/NowPlayingPanel";
+import {useSettings}                      from "@/components/Settings/SettingsProvider";
+import {SidebarStub}                      from "@/components/Sidebar";
+import {TopBar}                           from "@/components/TopBar";
+import {TrackList}                        from "@/components/TrackList";
+import {useAudioPlayer}                   from "@/hooks/useAudioPlayer";
+import {useFantiaMapping}                 from "@/hooks/useFantiaMapping";
+import {useMp3Library, useOrderedMp3List} from "@/hooks/useMp3Library";
+import {usePlaylistPlayer}                from "@/hooks/usePlaylistPlayer";
+import {useTrackViews}                    from "@/hooks/useTrackViews";
+
+import React from "react";
 
 export default function Page() {
+
+  const {settings} = useSettings();
+
+  // covers が何度変わっても、曲順は変えないために「曲順トリガー」を分離する
+  const [shuffleVersion, _] = React.useState(0);
+
   const {
     mp3List,
     covers,
     settingAction,
-  } = useMp3Library();
+  } = useMp3Library(settings.playback.shuffle);
+
+  const orderedMp3List = useOrderedMp3List(
+    mp3List,
+    settings.playback.shuffle,
+    shuffleVersion
+  );
 
   const {mappingByPrefixId, error: mappingError, isLoading: mappingLoading} = useFantiaMapping();
 
   const {audioRef, nowPlayingID, playEntry} = useAudioPlayer();
   const metaByPath = settingAction.metaByPath
   const trackViews = useTrackViews({
-    mp3List,
+    mp3List: orderedMp3List,
     metaByPath,
     covers,
     mappingByPrefixId,
   });
 
-  const list = trackViews.map((t) => t.item);
-
-  const {settings} = useSettings();
   const {
     playActions,
   } = usePlaylistPlayer({
     audioRef,
     playEntry,
-    list,
+    trackViews,
     resetKey: settingAction.folderName, // フォルダ切替でindexリセット
     settings,
   });

@@ -1,12 +1,10 @@
-import {getDirname}                   from "@/hooks/src/lib/path/getDirname";
-import {TrackMetaByPath}              from "@/hooks/src/types/trackMeta";
-import {Covers}                       from "@/hooks/useMp3Library";
-import {extractPrefixIdFromPath}      from "@/lib/mapping/extractPrefixId";
-import {buildReleaseOrderLabel}       from "@/lib/playlist/label";
-import {buildSortKey, compareSortKey} from "@/lib/playlist/sort";
-import type {Mp3Entry}                from "@/types";
-import type {FantiaMappingEntry}      from "@/types/mapping";
-import {useMemo}                      from "react";
+import {getDirname}              from "@/hooks/src/lib/path/getDirname";
+import {TrackMetaByPath}         from "@/hooks/src/types/trackMeta";
+import {Covers}                  from "@/hooks/useMp3Library";
+import {extractPrefixIdFromPath} from "@/lib/mapping/extractPrefixId";
+import {buildReleaseOrderLabel}  from "@/lib/playlist/label";
+import type {Mp3Entry}           from "@/types";
+import type {FantiaMappingEntry} from "@/types/mapping";
 
 type UseTrackViewsArgs = {
   mp3List: Mp3Entry[];
@@ -22,7 +20,6 @@ type UseTrackViewsArgs = {
 
 export type TrackView = {
   item: Mp3Entry;
-  index: number;
   displayTitle: string;
 
   orderLabel: string;            // ✅ アルバム/順 or 年月/順（最終表示）
@@ -42,58 +39,44 @@ const normalizeText = (value: unknown): string | null => {
 export const useTrackViews = (args: UseTrackViewsArgs): TrackView[] => {
   const {mp3List, metaByPath, covers, mappingByPrefixId} = args;
 
-  return useMemo(() => {
-    const decorated = mp3List.map((item, originalIndex) => {
-      const key = buildSortKey(item, mappingByPrefixId);
-      return {item, key, originalIndex};
-    });
+  // ここはただの計算。副作用（localStorage書き込み/乱数で順序変更など）は入れないのが安全。
+  const decorated = mp3List.map((item, originalIndex) => {
+    const key = item.id
+    return {item, key, originalIndex};
+  });
 
-    decorated.sort((a, b) => {
-      const diff = compareSortKey(a.key, b.key);
-      return diff !== 0 ? diff : a.originalIndex - b.originalIndex;
-    });
+  return decorated.map(({item}, index) => {
+    const meta = metaByPath[item.path];
 
-    return decorated.map(({item}, index) => {
-      const meta = metaByPath[item.path];
+    const prefixId = extractPrefixIdFromPath(item.path);
+    const mapping = prefixId ? mappingByPrefixId.get(prefixId) : undefined;
 
-      const prefixId = extractPrefixIdFromPath(item.path);
-      const mapping = prefixId ? mappingByPrefixId.get(prefixId) : undefined;
+    const displayTitle = mapping?.title ?? meta?.title ?? "（曲名なし）";
 
-      // 曲名： mapping > タグtitle > (曲名なし)
-      const displayTitle = mapping?.title ?? meta?.title ?? "（曲名なし）";
+    const albumName = meta?.album ?? null;
+    const trackNo = meta?.trackNo ?? null;
 
-      // ✅ 年月/順：アルバム名/トラック番号があれば優先
-      const albumName = meta?.album ?? null;
-      const trackNo = meta?.trackNo ?? null;
+    const albumOrderLabel =
+      albumName ? (trackNo ? `${albumName} / ${toTwoDigits(trackNo)}` : albumName) : null;
 
-      const albumOrderLabel =
-        albumName
-          ? (trackNo ? `${albumName} / ${toTwoDigits(trackNo)}` : albumName)
-          : null;
+    const releaseOrderLabel = buildReleaseOrderLabel(mapping) ?? "年月不明";
+    const orderLabel = albumOrderLabel ?? releaseOrderLabel;
 
-      const releaseOrderLabel = buildReleaseOrderLabel(mapping) ?? "年月不明";
-      const orderLabel = albumOrderLabel ?? releaseOrderLabel;
+    const tagArtist = normalizeText(meta?.artist);
+    const mappingOriginal = normalizeText(mapping?.originalArtist);
+    const originalArtist = tagArtist ?? mappingOriginal;
 
-      // ✅ 原曲（表示）は「タグのアーティストがあれば優先、なければ mapping の原曲」
-      const tagArtist = normalizeText(meta?.artist);
-      const mappingOriginal = normalizeText(mapping?.originalArtist);
-      const originalArtist = tagArtist ?? mappingOriginal;
+    const dirPath = getDirname(item.path);
+    const coverUrl =
+      covers.coverUrlByPath[item.path] ?? covers.dirCoverUrlByDir[dirPath] ?? null;
 
-      // cover：曲の埋め込み > フォルダ代表
-      const dirPath = getDirname(item.path);
-      const coverUrl =
-        covers.coverUrlByPath[item.path] ??
-        covers.dirCoverUrlByDir[dirPath] ??
-        null;
-
-      return {
-        item,
-        index,
-        displayTitle,
-        orderLabel,
-        originalArtist,
-        coverUrl,
-      };
-    });
-  }, [mp3List, metaByPath, covers, mappingByPrefixId]);
+    return {
+      item,
+      index,
+      displayTitle,
+      orderLabel,
+      originalArtist,
+      coverUrl,
+    };
+  });
 };

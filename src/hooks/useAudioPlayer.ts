@@ -1,7 +1,7 @@
 "use client";
 
-import type {Mp3Entry}               from "@/types";
-import {useEffect, useRef, useState} from "react";
+import type {Mp3Entry}    from "@/types";
+import {useRef, useState} from "react";
 
 export const useAudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -17,19 +17,7 @@ export const useAudioPlayer = () => {
     objectUrlRef.current = null;
   };
 
-  const stop = () => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.pause();
-      audio.removeAttribute("src");
-      audio.load();
-    }
-    setAudioSrc(null);
-    setNowPlayingID(0);
-    revokeCurrentUrl();
-  };
-
-  const playEntry = async (entry: Mp3Entry, title: string | null) => {
+  const playEntry = async (entry: Mp3Entry) => {
     const audio = audioRef.current;
     if (!audio) return;
 
@@ -53,19 +41,10 @@ export const useAudioPlayer = () => {
     }
   };
 
-  // コンポーネント破棄時の掃除
-  useEffect(() => {
-    return () => {
-      stop();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return {
     audioRef,
     audioSrc,
     nowPlayingID,
     playEntry,
-    stop,
   };
 };

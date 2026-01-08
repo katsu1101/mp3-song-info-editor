@@ -74,11 +74,5 @@ export const parseFantiaMappingText = (text: string): FantiaMappingEntry[] => {
     });
   }
 
-  // 年月→月内連番でソート（常に月順になる）
-  entries.sort((a, b) =>
-    a.releaseYm.localeCompare(b.releaseYm, "ja") ||
-    a.withinMonthIndex - b.withinMonthIndex
-  );
-
   return entries;
 };
