@@ -1,24 +1,21 @@
 import {isTypingTarget}                                 from "@/lib/dom/isTypingTarget";
+import {Settings}                                       from "@/lib/settings/settings";
 import type {Mp3Entry}                                  from "@/types";
 import React, {useCallback, useEffect, useMemo, useRef} from "react";
 
 type UsePlaylistPlayerArgs = {
   audioRef: React.RefObject<HTMLAudioElement | null>;
   playEntry: (entry: Mp3Entry, title: string | null) => Promise<void>;
-  stop: () => void;
 
   list: Mp3Entry[]; // 連続再生の並び順確定済み
-  getTitle: (entry: Mp3Entry) => string | null;
   resetKey?: string; // フォルダ変更などでリセットしたい時に渡す
-  isContinuous: boolean;
-  isShuffle: boolean;
+  settings: Settings
 };
 
 export type PlayActions = {
   playAtIndex: (index: number) => Promise<void>;
   playNext: () => Promise<void>;
   playPrev: () => Promise<void>;
-  pause: () => void;
 }
 
 const randomInt = (maxExclusive: number): number => {
@@ -55,7 +52,7 @@ const buildShuffledQueue = (length: number, excludeIndex: number | null): number
 };
 
 export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
-  const {audioRef, playEntry, stop, list, getTitle, resetKey, isContinuous, isShuffle} = args;
+  const {audioRef, playEntry, list, resetKey, settings} = args;
 
   const currentIndexRef = useRef<number | null>(null);
 
@@ -67,12 +64,10 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
   const shuffleHistoryRef = useRef<number[]>([]);
 
   useEffect(() => {
-    isContinuousRef.current = isContinuous;
-  }, [isContinuous]);
+    isContinuousRef.current = settings.playback.continuous;
+    isShuffleRef.current = settings.playback.shuffle;
+  }, [settings]);
 
-  useEffect(() => {
-    isShuffleRef.current = isShuffle;
-  }, [isShuffle]);
 
   const syncShuffleQueue = useCallback(() => {
     if (!isShuffleRef.current) return;
@@ -100,12 +95,12 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
       }
 
       const entry = list[index];
-      const title = getTitle(entry);
+      const title = entry.name;
 
       currentIndexRef.current = index;
       await playEntry(entry, title);
     },
-    [list, getTitle, playEntry]
+    [list, playEntry]
   );
 
   const playNext = useCallback(async (): Promise<void> => {
@@ -140,11 +135,6 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
     await playAtIndex(idx - 1);
   }, [playAtIndex]);
 
-  const pause = useCallback((): void => {
-    stop();
-    // currentIndexRef.current = null; // ←互換のまま残す（必要なら外で制御）
-  }, [stop]);
-
   // audio ended → 次へ（連続再生ON時）
   useEffect(() => {
     const audio = audioRef.current;
@@ -169,9 +159,9 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
 
   // list が変わったら（曲数変動など）シャッフルキューを再生成
   useEffect(() => {
-    if (!isShuffle) return;
+    if (!settings.playback.shuffle) return;
     syncShuffleQueue();
-  }, [isShuffle, syncShuffleQueue]);
+  }, [settings, syncShuffleQueue]);
 
   // キーボードショートカット
   useEffect(() => {
@@ -226,9 +216,8 @@ export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
         playAtIndex,
         playNext,
         playPrev,
-        pause
       } as PlayActions
     }),
-    [isContinuous, isShuffle, playAtIndex, playNext, playPrev, pause]
+    [playAtIndex, playNext, playPrev]
   );
 };

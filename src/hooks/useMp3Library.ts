@@ -1,16 +1,35 @@
 "use client";
 
-import {getDirname}        from "@/hooks/src/lib/path/getDirname";
-import {useObjectUrlStore} from "@/hooks/useObjectUrlStore";
-
+import {getDirname}                                                     from "@/hooks/src/lib/path/getDirname";
+import {useObjectUrlStore}                                              from "@/hooks/useObjectUrlStore";
 import {runWithConcurrency}                                             from "@/lib/async/runWithConcurrency";
 import {clearDirectoryHandle, loadDirectoryHandle, saveDirectoryHandle} from "@/lib/fsAccess/dirHandleStore";
-import {readMp3FromDirectory} from "@/lib/fsAccess/scanMp3";
-import {Mp3Meta, readMp3Meta} from "@/lib/mp3/readMp3Meta";
-import type {Mp3Entry}        from "@/types";
+import {readMp3FromDirectory}                                           from "@/lib/fsAccess/scanMp3";
+import {Mp3Meta, readMp3Meta}                                           from "@/lib/mp3/readMp3Meta";
+import type {Mp3Entry}                                                  from "@/types";
+import {useEffect, useState}                                            from "react";
+import {TrackMeta, TrackMetaByPath}                                     from "./src/types/trackMeta";
 
-import {useEffect, useMemo, useState} from "react";
-import {TrackMeta, TrackMetaByPath} from "./src/types/trackMeta";
+const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif"]);
+
+type ImageCandidate = { name: string; handle: FileSystemFileHandle };
+
+export type Covers = {
+  coverUrlByPath: Record<string, string | null>;
+  dirCoverUrlByDir: Record<string, string | null>;
+}
+
+export type SettingAction = {
+  folderName: string,
+  errorMessage: string,
+  // ✅ TrackMeta 本体
+  metaByPath: TrackMetaByPath,
+  savedHandle: FileSystemDirectoryHandle | null,
+  needsReconnect: boolean,
+  pickFolderAndLoad: () => Promise<void>;
+  reconnect: () => Promise<void>;
+  forget: () => Promise<void>;
+}
 
 const canReadNow = async (handle: FileSystemDirectoryHandle): Promise<boolean> => {
   if (!handle.queryPermission) return true;
@@ -23,8 +42,6 @@ const requestRead = async (handle: FileSystemDirectoryHandle): Promise<boolean> 
   const state = await handle.requestPermission({mode: "read"});
   return state === "granted";
 };
-
-const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif"]);
 
 const getLowerExt = (name: string): string => {
   const dotIndex = name.lastIndexOf(".");
@@ -46,8 +63,6 @@ const resolveDirectoryHandle = async (
   }
   return currentHandle;
 };
-
-type ImageCandidate = { name: string; handle: FileSystemFileHandle };
 
 const findFirstImageFileHandle = async (
   directoryHandle: FileSystemDirectoryHandle
@@ -74,6 +89,21 @@ const findFirstImageFileHandle = async (
   return candidates[0]?.handle ?? null;
 };
 
+// useMp3Library.ts（適当な場所にヘルパー追加）
+const createCoverObjectUrl = (
+  picture?: { data: Uint8Array; format: string },
+): string | null => {
+  if (!picture) return null;
+  if (typeof window === "undefined") return null;
+
+  // Uint8Array の「有効部分」だけを ArrayBuffer にコピーして Blob 化
+  const bytes = picture.data;
+  const arrayBuffer = bytes.slice().buffer; // slice() で新しい Uint8Array を作り、その buffer は ArrayBuffer になる
+
+  const blob = new Blob([arrayBuffer], {type: picture.format});
+  return URL.createObjectURL(blob);
+};
+
 export const useMp3Library = () => {
   const [mp3List, setMp3List] = useState<Mp3Entry[]>([]);
   const [folderName, setFolderName] = useState("");
@@ -90,30 +120,6 @@ export const useMp3Library = () => {
 
   // ✅ フォルダ代表ジャケット（フォルダごと）
   const dirCovers = useObjectUrlStore();
-
-  const totalSize = useMemo(
-    () => mp3List.reduce((sum, item) => sum + item.size, 0),
-    [mp3List]
-  );
-
-  // ✅ 互換用（既存コードが titleByPath / albumByPath / trackNoByPath を参照している間はこれでOK）
-  const titleByPath = useMemo<Record<string, string | null>>(() => {
-    const out: Record<string, string | null> = {};
-    for (const [path, meta] of Object.entries(metaByPath)) out[path] = meta?.title ?? null;
-    return out;
-  }, [metaByPath]);
-
-  const albumByPath = useMemo<Record<string, string | null>>(() => {
-    const out: Record<string, string | null> = {};
-    for (const [path, meta] of Object.entries(metaByPath)) out[path] = meta?.album ?? null;
-    return out;
-  }, [metaByPath]);
-
-  const trackNoByPath = useMemo<Record<string, number | null>>(() => {
-    const out: Record<string, number | null> = {};
-    for (const [path, meta] of Object.entries(metaByPath)) out[path] = meta?.trackNo ?? null;
-    return out;
-  }, [metaByPath]);
 
   const resetView = () => {
     setErrorMessage("");
@@ -254,42 +260,23 @@ export const useMp3Library = () => {
 
   return {
     mp3List,
-    folderName,
-    errorMessage,
-    totalSize,
-
-    // ✅ TrackMeta 本体
-    metaByPath,
-
-    // ✅ 互換（既存の useTrackViews/Page が参照しているなら残す）
-    titleByPath,
-    albumByPath,
-    trackNoByPath,
 
     // ✅ カバーURL（曲/フォルダ）
-    coverUrlByPath: covers.urlByKey,
-    dirCoverUrlByDir: dirCovers.urlByKey,
+    covers: {
+      coverUrlByPath: covers.urlByKey,
+      dirCoverUrlByDir: dirCovers.urlByKey,
+    } as Covers,
 
-    savedHandle,
-    needsReconnect,
-
-    pickFolderAndLoad,
-    reconnect,
-    forget,
+    settingAction: {
+      folderName,
+      errorMessage,
+      // ✅ TrackMeta 本体
+      metaByPath,
+      savedHandle,
+      needsReconnect,
+      pickFolderAndLoad,
+      reconnect,
+      forget,
+    } as SettingAction
   };
-};
-
-// useMp3Library.ts（適当な場所にヘルパー追加）
-const createCoverObjectUrl = (
-  picture?: { data: Uint8Array; format: string },
-): string | null => {
-  if (!picture) return null;
-  if (typeof window === "undefined") return null;
-
-  // Uint8Array の「有効部分」だけを ArrayBuffer にコピーして Blob 化
-  const bytes = picture.data;
-  const arrayBuffer = bytes.slice().buffer; // slice() で新しい Uint8Array を作り、その buffer は ArrayBuffer になる
-
-  const blob = new Blob([arrayBuffer], { type: picture.format });
-  return URL.createObjectURL(blob);
 };

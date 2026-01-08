@@ -1,20 +1,19 @@
 "use client";
 
 import {useSettings}              from "@/components/Settings/SettingsProvider";
+import {PlayActions}              from "@/hooks/usePlaylistPlayer";
 import {TrackView}                from "@/hooks/useTrackViews";
 import Image                      from "next/image";
 import React, {useEffect, useRef} from "react";
 
 type TrackListProps = {
   trackViews: readonly TrackView[];
-
-  onPlayAtIndexAction: (index: number) => void | Promise<void>;
-
+  playActions: PlayActions;
   nowPlayingID: number;
 };
 
 export function TrackList(props: TrackListProps) {
-  const {trackViews, onPlayAtIndexAction, nowPlayingID} = props;
+  const {trackViews, playActions, nowPlayingID} = props;
 
   const nowRowRef = useRef<HTMLTableRowElement | null>(null);
 
@@ -44,11 +43,6 @@ export function TrackList(props: TrackListProps) {
 
   return (
     <section style={{marginTop: 12}}>
-      {/* サマリー（コンパクト） */}
-      {/*<div style={{display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12, opacity: 0.9}}>*/}
-      {/*  <div>MP3: <b>{mp3Count}</b></div>*/}
-      {/*  <div>合計: <b>{formatMegaBytes(totalSizeBytes)}</b></div>*/}
-      {/*</div>*/}
 
       {trackViews.length === 0 ? (
         <p style={{marginTop: 10, opacity: 0.7, fontSize: 13}}>曲がありません（フォルダを選択してください）</p>
@@ -158,7 +152,7 @@ export function TrackList(props: TrackListProps) {
                   <td style={{...tdStyle, padding: 0}}>
                     <div style={{display: "grid", placeItems: "center"}}>
                       <button
-                        onClick={() => void onPlayAtIndexAction(t.index)}
+                        onClick={() => void playActions.playAtIndex(t.index)}
                         style={{
                           height: 20,
                           width: 28,

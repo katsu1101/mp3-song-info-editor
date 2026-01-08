@@ -14,48 +14,33 @@ import {useTrackViews}     from "@/hooks/useTrackViews";
 
 export default function Page() {
   const {
-    needsReconnect,
-    savedHandle,
-    reconnect,
-    forget,
     mp3List,
-    folderName,
-    errorMessage,
-    metaByPath,
-    coverUrlByPath,
-    dirCoverUrlByDir,
-    pickFolderAndLoad,
+    covers,
+    settingAction,
   } = useMp3Library();
 
   const {mappingByPrefixId, error: mappingError, isLoading: mappingLoading} = useFantiaMapping();
 
-  const {audioRef, nowPlayingID, playEntry, stop} = useAudioPlayer();
-
+  const {audioRef, nowPlayingID, playEntry} = useAudioPlayer();
+  const metaByPath = settingAction.metaByPath
   const trackViews = useTrackViews({
     mp3List,
     metaByPath,
-    coverUrlByPath,
-    dirCoverUrlByDir,
+    covers,
     mappingByPrefixId,
   });
 
   const list = trackViews.map((t) => t.item);
-  const getTitle = (entry: (typeof list)[number]) => {
-    const found = trackViews.find((t) => t.item.path === entry.path);
-    return found ? found.displayTitle : null;
-  };
+
   const {settings} = useSettings();
   const {
     playActions,
   } = usePlaylistPlayer({
     audioRef,
     playEntry,
-    stop,
     list,
-    getTitle,
-    resetKey: folderName, // フォルダ切替でindexリセット
-    isContinuous: settings.playback.continuous,
-    isShuffle: settings.playback.shuffle,
+    resetKey: settingAction.folderName, // フォルダ切替でindexリセット
+    settings,
   });
 
   return (
@@ -63,24 +48,21 @@ export default function Page() {
       header={
         <TopBar
           title="MP3曲情報エディター"
-          folderName={folderName}
-          savedHandle={savedHandle}
-          needsReconnect={needsReconnect}
-          pickFolderAndLoadAction={pickFolderAndLoad}
-          reconnectAction={reconnect}
-          forgetAction={forget}
+          settingAction={settingAction}
         />
       }
       sidebar={<SidebarStub/>}
       main={
         <>
-          {errorMessage ? <p style={{color: "crimson"}}>エラー: {errorMessage}</p> : null}
+          {settingAction.errorMessage
+            ? <p style={{color: "crimson"}}>エラー: {settingAction.errorMessage}</p>
+            : null}
           {mappingError ? <p style={{color: "crimson"}}>対応表エラー: {mappingError}</p> : null}
           {mappingLoading ? <p style={{opacity: 0.7}}>対応表読み込み中…</p> : null}
 
           <TrackList
             trackViews={trackViews}
-            onPlayAtIndexAction={playActions.playAtIndex}
+            playActions={playActions}
             nowPlayingID={nowPlayingID}
           />
         </>

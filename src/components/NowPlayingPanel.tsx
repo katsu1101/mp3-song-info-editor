@@ -37,10 +37,6 @@ export function NowPlayingPanel(props: NowPlayingPanelProps) {
   }, [nowPlayingID, trackViews]);
 
   const title = nowTrackView?.displayTitle ?? "";
-  const coverUrl = nowTrackView?.coverUrl ?? null;
-
-  const releaseOrder = nowTrackView?.orderLabel ?? "—";
-  const originalArtist = nowTrackView?.originalArtist ?? "—";
 
   const filePath = nowTrackView?.item.path;
   const fileName = filePath ? getBasename(filePath) : "—";
@@ -116,9 +112,9 @@ export function NowPlayingPanel(props: NowPlayingPanelProps) {
             placeItems: "center",
           }}
         >
-          {coverUrl ? (
+          {nowTrackView?.coverUrl ? (
             <Image
-              src={coverUrl}
+              src={nowTrackView?.coverUrl}
               alt=""
               width={COVER_MAX}
               height={COVER_MAX}
@@ -193,8 +189,8 @@ export function NowPlayingPanel(props: NowPlayingPanelProps) {
 
       {/* 情報（縦） */}
       <div style={{marginTop: 12, display: "grid", gap: 6}}>
-        <InfoRow label="年月/順" value={releaseOrder}/>
-        <InfoRow label="原曲" value={originalArtist}/>
+        <InfoRow label="年月/順" value={nowTrackView?.orderLabel ?? "—"}/>
+        <InfoRow label="原曲" value={nowTrackView?.originalArtist ?? "—"}/>
         <InfoRow label="ファイル" value={fileName}/>
         {dirName ? <InfoRow label="フォルダ" value={dirName}/> : null}
       </div>

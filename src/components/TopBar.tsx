@@ -1,41 +1,27 @@
 "use client";
 
-import {useSettings} from "@/components/Settings/SettingsProvider";
-import React         from "react";
+import {useSettings}   from "@/components/Settings/SettingsProvider";
+import {SettingAction} from "@/hooks/useMp3Library";
+import React           from "react";
 
 type TopBarProps = {
   title: string;
-
-  folderName: string | null;
-  savedHandle: unknown | null;
-  needsReconnect: boolean;
-
-  pickFolderAndLoadAction: () => void;
-  reconnectAction: () => void;
-  forgetAction: () => void;
+  settingAction: SettingAction;
 };
 
 export function TopBar(props: TopBarProps) {
+  const {title, settingAction} = props;
+
   const {settings, toggleShowFilePath, toggleContinuous, toggleShuffle} = useSettings();
 
   const showFilePath = settings.ui.showFilePath;
   const isContinuous = settings.playback.continuous;
   const isShuffle = settings.playback.shuffle;
 
-  const {
-    title,
-    folderName,
-    savedHandle,
-    needsReconnect,
-    pickFolderAndLoadAction,
-    reconnectAction,
-    forgetAction,
-  } = props;
-
   const handleForget = () => {
     const ok = window.confirm("保存しているフォルダの記憶を消します。よろしいですか？");
     if (!ok) return;
-    forgetAction();
+    settingAction.forget().then();
   };
 
   return (
@@ -83,16 +69,18 @@ export function TopBar(props: TopBarProps) {
               textOverflow: "ellipsis",
               maxWidth: 360,
             }}
-            title={folderName ?? "未選択"}
+            title={settingAction.folderName}
           >
-            {folderName ? `選択中: ${folderName}` : "未選択"}
+            {settingAction.folderName
+              ? `選択中: ${settingAction.folderName}`
+              : "未選択"}
           </span>
         </div>
 
         {/* 中：フォルダ操作 */}
         <div style={{display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap"}}>
           <button
-            onClick={pickFolderAndLoadAction}
+            onClick={settingAction.pickFolderAndLoad}
             style={{
               padding: "6px 10px",
               borderRadius: 10,
@@ -106,9 +94,9 @@ export function TopBar(props: TopBarProps) {
             フォルダを選ぶ
           </button>
 
-          {savedHandle && needsReconnect ? (
+          {settingAction.savedHandle && settingAction.needsReconnect ? (
             <button
-              onClick={reconnectAction}
+              onClick={settingAction.reconnect}
               style={{
                 padding: "6px 10px",
                 borderRadius: 10,
@@ -198,7 +186,7 @@ export function TopBar(props: TopBarProps) {
           </label>
 
           {/* 記憶を消す（confirm付き） */}
-          {savedHandle ? (
+          {settingAction.savedHandle ? (
             <button
               onClick={handleForget}
               style={{

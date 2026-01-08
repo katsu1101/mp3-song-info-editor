@@ -1,11 +1,24 @@
 import {getDirname}                   from "@/hooks/src/lib/path/getDirname";
 import {TrackMetaByPath}              from "@/hooks/src/types/trackMeta";
+import {Covers}                       from "@/hooks/useMp3Library";
 import {extractPrefixIdFromPath}      from "@/lib/mapping/extractPrefixId";
 import {buildReleaseOrderLabel}       from "@/lib/playlist/label";
 import {buildSortKey, compareSortKey} from "@/lib/playlist/sort";
 import type {Mp3Entry}                from "@/types";
 import type {FantiaMappingEntry}      from "@/types/mapping";
 import {useMemo}                      from "react";
+
+type UseTrackViewsArgs = {
+  mp3List: Mp3Entry[];
+
+  // ✅ TrackMeta の集約を受け取る
+  metaByPath: TrackMetaByPath;
+
+  // ✅ cover（曲 > フォルダ代表）はこのまま
+  covers: Covers;
+
+  mappingByPrefixId: ReadonlyMap<string, FantiaMappingEntry>;
+};
 
 export type TrackView = {
   item: Mp3Entry;
@@ -18,19 +31,6 @@ export type TrackView = {
   coverUrl: string | null;
 };
 
-type UseTrackViewsArgs = {
-  mp3List: Mp3Entry[];
-
-  // ✅ TrackMeta の集約を受け取る
-  metaByPath: TrackMetaByPath;
-
-  // ✅ cover（曲 > フォルダ代表）はこのまま
-  coverUrlByPath: Record<string, string | null | undefined>;
-  dirCoverUrlByDir: Record<string, string | null | undefined>;
-
-  mappingByPrefixId: ReadonlyMap<string, FantiaMappingEntry>;
-};
-
 const toTwoDigits = (n: number) => String(n).padStart(2, "0");
 
 const normalizeText = (value: unknown): string | null => {
@@ -40,7 +40,7 @@ const normalizeText = (value: unknown): string | null => {
 };
 
 export const useTrackViews = (args: UseTrackViewsArgs): TrackView[] => {
-  const {mp3List, metaByPath, coverUrlByPath, dirCoverUrlByDir, mappingByPrefixId} = args;
+  const {mp3List, metaByPath, covers, mappingByPrefixId} = args;
 
   return useMemo(() => {
     const decorated = mp3List.map((item, originalIndex) => {
@@ -82,8 +82,8 @@ export const useTrackViews = (args: UseTrackViewsArgs): TrackView[] => {
       // cover：曲の埋め込み > フォルダ代表
       const dirPath = getDirname(item.path);
       const coverUrl =
-        coverUrlByPath[item.path] ??
-        dirCoverUrlByDir[dirPath] ??
+        covers.coverUrlByPath[item.path] ??
+        covers.dirCoverUrlByDir[dirPath] ??
         null;
 
       return {
@@ -95,5 +95,5 @@ export const useTrackViews = (args: UseTrackViewsArgs): TrackView[] => {
         coverUrl,
       };
     });
-  }, [mp3List, metaByPath, coverUrlByPath, dirCoverUrlByDir, mappingByPrefixId]);
+  }, [mp3List, metaByPath, covers, mappingByPrefixId]);
 };
