@@ -1,18 +1,32 @@
 "use client";
 
-import {useSettings}              from "@/components/Settings/SettingsProvider";
-import {PlayActions}              from "@/hooks/usePlaylistPlayer";
-import {TrackView}                from "@/hooks/useTrackViews";
-import Image                      from "next/image";
-import React, {useEffect, useRef} from "react";
+import {useSettings}                   from "@/components/Settings/SettingsProvider";
+import {PlayActions}                   from "@/types/actions";
+import {TrackView}                     from "@/types/views";
+import Image                           from "next/image";
+import React, {JSX, useEffect, useRef} from "react";
 
+/**
+ * トラックリストコンポーネントのプロパティを表します。
+ */
 type TrackListProps = {
   trackViews: readonly TrackView[];
   playActions: PlayActions;
   nowPlayingID: number;
 };
 
-export function TrackList(props: TrackListProps) {
+/**
+ * トラックリストコンポーネントをレンダリングし、トラックの一覧を表示します。各トラックには、タイトル、アルバム、オリジナルアーティスト、ファイルパスなどの詳細情報が含まれます。
+ * トラックを再生するためのインタラクティブな要素を備え、現在再生中のトラックをハイライト表示します。
+ *
+ * @param {TrackListProps} props - TrackList コンポーネントに渡されるプロパティ。
+ * @param {Array} props.trackViews - 表示する各トラックの詳細を含むトラックビューオブジェクトの配列。
+ * @param {Object} props.playActions - 特定のインデックスでトラックを再生するなど、再生アクション用の関数を格納したオブジェクト。
+ * @param {string | null} props.nowPlayingID - 現在再生中のトラックのID。リスト内でハイライト表示するために使用されます。
+ *
+ * @return {JSX.Element} トラックの一覧とその詳細情報を表示するレンダリング済み TrackList コンポーネント。
+ */
+export function TrackList(props: TrackListProps): JSX.Element {
   const {trackViews, playActions, nowPlayingID} = props;
 
   const nowRowRef = useRef<HTMLTableRowElement | null>(null);
@@ -218,6 +232,10 @@ export function TrackList(props: TrackListProps) {
   );
 }
 
+/**
+ * テーブルヘッダー（th）要素に適用されるスタイルを表します。
+ * パディング、フォントサイズ、フォントウェイト、不透明度、テキスト配置、および空白処理に関するCSSプロパティを含みます。
+ */
 const thStyle: React.CSSProperties = {
   padding: "2px 6px",
   fontSize: 11,
@@ -227,12 +245,21 @@ const thStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+/**
+ * テーブルセル（td）要素に適用されるスタイルプロパティを表します。
+ * このオブジェクトは、要素のレイアウトと外観を定義するために使用されます。
+ */
 const tdStyle: React.CSSProperties = {
   padding: "0 6px",
   verticalAlign: "middle",
   lineHeight: "24px",      // ✅ 行高に吸着させる
 };
 
+/**
+ * テキスト関連のプロパティを設定するためのCSSスタイルオブジェクト。
+ *
+ * `oneLine15`オブジェクトは、単一行のテキストに適用される特定のスタイルを定義します。
+ */
 const oneLine15: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 900,
@@ -242,6 +269,9 @@ const oneLine15: React.CSSProperties = {
   textOverflow: "ellipsis",
 };
 
+/**
+ * 特定の視覚的外観でテキストをスタイル設定するためのCSSプロパティオブジェクト。
+ */
 const oneLine12: React.CSSProperties = {
   fontSize: 12,
   opacity: 0.75,
@@ -251,6 +281,10 @@ const oneLine12: React.CSSProperties = {
   textOverflow: "ellipsis",
 };
 
+/**
+ * テキスト要素が特定のフォントサイズ、透明度、およびオーバーフロー動作で単一行に表示されるようにするCSSスタイル。
+ * このスタイルには、オーバーフローしたテキストを省略記号で切り詰める設定が含まれます。
+ */
 const oneLine11dim: React.CSSProperties = {
   fontSize: 11,
   opacity: 0.55,

@@ -1,15 +1,33 @@
 "use client";
 
 import {useSettings}   from "@/components/Settings/SettingsProvider";
-import {SettingAction} from "@/hooks/useMp3Library";
-import React           from "react";
+import {SettingAction} from "@/types/setting";
+import React, {JSX}    from "react";
 
+/**
+ * TopBarコンポーネントに必要なプロパティを表します。
+ */
 type TopBarProps = {
   title: string;
   settingAction: SettingAction;
 };
 
-export function TopBar(props: TopBarProps) {
+/**
+ * カスタマイズ可能なタイトル、フォルダ関連のアクション、設定トグルを備えたトップバーをレンダリングする機能コンポーネント。
+ *
+ * @param {Object} props - TopBarコンポーネントに渡されるプロパティ。
+ * @param {string} props.title - トップバーに表示されるタイトル。
+ * @param {Object} props.settingAction - フォルダ関連のアクションとプロパティを含むオブジェクト。
+ * @param {string} [props.settingAction.folderName] - 現在選択されているフォルダー名。
+ * @param {Function} props.settingAction.pickFolderAndLoad - フォルダーを選択して読み込む関数。
+ * @param {Function} props.settingAction.reconnect - 以前に保存されたフォルダーに再接続する関数。
+ * @param {Function} props.settingAction.forget - 保存済みフォルダを忘れる関数。
+ * @param {boolean} [props.settingAction.needsReconnect] - 再接続が必要かどうかを示すフラグ。
+ * @param {boolean} [props.settingAction.savedHandle] - フォルダハンドルが保存されているかどうかを示すフラグ。
+ *
+ * @return {JSX.Element} The rendered header containing the title, folder actions, and toggleable settings.
+ */
+export function TopBar(props: TopBarProps): JSX.Element {
   const {title, settingAction} = props;
 
   const {settings, toggleShowFilePath, toggleContinuous, toggleShuffle} = useSettings();
@@ -209,6 +227,9 @@ export function TopBar(props: TopBarProps) {
   );
 }
 
+/**
+ * トグルトラック要素のスタイル設定用CSSプロパティのセットを生成します。
+ */
 const toggleTrackStyle = (checked: boolean): React.CSSProperties => ({
   position: "relative",
   width: 44,
@@ -218,6 +239,9 @@ const toggleTrackStyle = (checked: boolean): React.CSSProperties => ({
   background: checked ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.08)",
 });
 
+/**
+ * チェック状態に基づいてトグルノブ要素のスタイルオブジェクトを生成します。
+ */
 const toggleKnobStyle = (checked: boolean): React.CSSProperties => ({
   position: "absolute",
   top: 3,

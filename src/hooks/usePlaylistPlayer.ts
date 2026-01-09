@@ -1,9 +1,16 @@
-import {TrackView}                                      from "@/hooks/useTrackViews";
-import {isTypingTarget}                                 from "@/lib/dom/isTypingTarget";
-import {Settings}                                       from "@/lib/settings/settings";
-import type {Mp3Entry}                                  from "@/types";
+import {isTypingTarget} from "@/lib/dom/isTypingTarget";
+
+import {PlayActions}                                    from "@/types/actions";
+import type {Mp3Entry}                                  from "@/types/mp3Entry";
+import {Settings}                                       from "@/types/setting";
+import {TrackView}                                      from "@/types/views";
 import React, {useCallback, useEffect, useMemo, useRef} from "react";
 
+/**
+ * プレイリストプレイヤーフックの引数。
+ *
+ * プレイリストプレイヤーの初期化と動作制御に必要なパラメータを表します。
+ */
 type UsePlaylistPlayerArgs = {
   audioRef: React.RefObject<HTMLAudioElement | null>;
   playEntry: (entry: Mp3Entry, title: string | null) => Promise<void>;
@@ -13,12 +20,25 @@ type UsePlaylistPlayerArgs = {
   settings: Settings
 };
 
-export type PlayActions = {
-  playAtIndex: (index: number) => Promise<void>;
-  playNext: () => Promise<void>;
-  playPrev: () => Promise<void>;
-}
-
+/**
+ * プレイリスト再生機能を管理するカスタムフック。以下の機能を実現します：
+ * ・トラックの順番再生
+ * ・連続再生
+ * ・シャッフルオプション
+ * ・再生制御用のキーボードショートカット対応
+ *
+ * @param {UsePlaylistPlayerArgs} args - プレイリストプレイヤーの設定と管理に必要な引数を含むオブジェクト。
+ * @param {React.RefObject<HTMLAudioElement>} args.audioRef - 再生に使用されるオーディオ要素への参照。
+ * @param {function} args.playEntry - 指定されたトラック項目を処理して再生する関数。
+ * @param {Array} args.trackViews - プレイリスト内のトラックを表す配列。再生用メタデータを含む。
+ * @param {any} args.resetKey - プレイリスト位置変更時にリセットする値。
+ * @param {object} args.settings - 連続再生やシャッフルモードなどのオプションを含む再生設定。
+ *
+ * @returns 再生制御メソッドを提供するインターフェース `playActions` を含むオブジェクト：
+ *                   - `playAtIndex(index: number): Promise<void>`: 指定したインデックスのトラックを再生します。
+ *                   - `playNext(): Promise<void>`: プレイリストの次のトラックを再生します。
+ *                   - `playPrev(): Promise<void>`: プレイリストの前のトラックを再生します。
+ */
 export const usePlaylistPlayer = (args: UsePlaylistPlayerArgs) => {
   const {audioRef, playEntry, trackViews, resetKey, settings} = args;
 

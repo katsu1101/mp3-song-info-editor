@@ -1,5 +1,17 @@
-import React from "react";
+import React, {JSX} from "react";
 
+/**
+ * App Shell レイアウトのレンダリングに必要なプロパティを表します。
+ *
+ * AppShellProps型は、アプリケーションのレイアウトの異なるセクションに対応する標準化されたReactノードのセットを提供するために設計されています。
+ * これにはヘッダー、サイドバー、メインコンテンツ領域、およびプレイヤーセクションが含まれます。
+ *
+ * プロパティ:
+ * - `header`: アプリレイアウトのヘッダーセクションにレンダリングされるReactノード。
+ * - `sidebar`: アプリレイアウトのサイドバーセクションにレンダリングされるReactノード。
+ * - `main`: アプリレイアウトのメインコンテンツ領域にレンダリングされるReactノード。
+ * - `player`: 右ペインにレンダリングされるReactノード。通常はプレイヤーのレンダリングに使用される。
+ */
 type AppShellProps = {
   header: React.ReactNode;
   sidebar: React.ReactNode;
@@ -7,7 +19,18 @@ type AppShellProps = {
   player: React.ReactNode; // 右ペイン
 };
 
-export function AppShell({header, sidebar, main, player}: AppShellProps) {
+/**
+ * アプリケーションのレイアウト構造を定義するAppShellコンポーネントをレンダリングします。
+ * これにはヘッダー、サイドバー、メインコンテンツ領域、およびプレイヤーセクションが含まれます。
+ *
+ * @param {Object} props - AppShell コンポーネントのプロパティオブジェクト。
+ * @param {React.ReactNode} props.header - レイアウト上部に表示されるヘッダーコンテンツ。
+ * @param {React.ReactNode} props.sidebar - レイアウト左セクションに表示されるサイドバーコンテンツ。
+ * @param {React.ReactNode} props.main - レイアウトの中央セクションに表示されるメインコンテンツ。
+ * @param {React.ReactNode} props.player - レイアウトの右セクションに表示されるプレイヤーコンテンツ。
+ * @return {JSX.Element} レンダリングされたレイアウトコンポーネント。
+ */
+export function AppShell({header, sidebar, main, player}: AppShellProps): JSX.Element {
   return (
     <div
       style={{

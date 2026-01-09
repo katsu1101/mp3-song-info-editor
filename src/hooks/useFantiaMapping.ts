@@ -1,16 +1,21 @@
 "use client";
 
-import {loadFantiaMappingFromPublic}  from "@/lib/mapping/loadFantiaMapping";
-import type {FantiaMappingEntry}      from "@/types/mapping";
-import {useEffect, useMemo, useState} from "react";
+import {loadFantiaMappingFromPublic}            from "@/lib/mapping/loadFantiaMapping";
+import {FantiaMappingEntry, FantiaMappingState} from "@/types/fantia";
+import {useEffect, useMemo, useState}           from "react";
 
-export type FantiaMappingState = {
-  mapping: FantiaMappingEntry[];
-  mappingByPrefixId: ReadonlyMap<string, FantiaMappingEntry>;
-  error: string;
-  isLoading: boolean;
-};
-
+/**
+ * Fantiaのマッピングデータを処理するための状態と機能を提供するカスタムフック。
+ *
+ * このフックは、Fantiaのマッピングエントリとその関連状態の読み込み、管理、およびアクセス提供を担当します。
+ * マッピングデータを非同期で取得し、プロセス中のエラーを処理し、迅速な検索のためのプレフィックスIDによるマッピングを公開します。
+ *
+ * @returns {FantiaMappingState} 以下の要素を含むオブジェクト：
+ * - `mapping`: Fantia マッピングエントリの配列。
+ * - `mappingByPrefixId`: キーが正規化された `prefixId` 値、値が対応するマッピングエントリである Map。
+ * - `error`: データ取得中に発生したエラーメッセージ（存在する場合）を表す文字列。
+ * - `isLoading`: データの読み込みがまだ進行中かどうかを示すブール値。
+ */
 export const useFantiaMapping = (): FantiaMappingState => {
   const [mapping, setMapping] = useState<FantiaMappingEntry[]>([]);
   const [error, setError] = useState<string>("");

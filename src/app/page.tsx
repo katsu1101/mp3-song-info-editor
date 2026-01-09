@@ -11,10 +11,16 @@ import {useFantiaMapping}                 from "@/hooks/useFantiaMapping";
 import {useMp3Library, useOrderedMp3List} from "@/hooks/useMp3Library";
 import {usePlaylistPlayer}                from "@/hooks/usePlaylistPlayer";
 import {useTrackViews}                    from "@/hooks/useTrackViews";
+import React, {JSX}                       from "react";
 
-import React from "react";
-
-export default function Page() {
+/**
+ * MP3トラック情報エディタのメインページを表すReact関数コンポーネント。
+ * トラックリストの並べ替え、シャッフル設定、再生コントロール、外部リソースとの連携など、様々な機能を処理します。
+ * ページはトップバー、サイドバー、メインコンテンツ、プレイヤーコンポーネントで構成されています。
+ *
+ * @return {JSX.Element} ヘッダー、サイドバー、メインコンテンツ、プレイヤーセクションを含む、アプリケーションのレンダリング済みコンポーネント構造。
+ */
+export default function Page(): JSX.Element {
 
   const {settings} = useSettings();
 

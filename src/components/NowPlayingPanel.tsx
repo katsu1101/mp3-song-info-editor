@@ -1,10 +1,14 @@
 "use client";
 
-import {PlayActions}                         from "@/hooks/usePlaylistPlayer";
-import {TrackView}                           from "@/hooks/useTrackViews";
-import Image                                 from "next/image";
-import React, {useEffect, useMemo, useState} from "react";
 
+import {PlayActions}                              from "@/types/actions";
+import {TrackView}                                from "@/types/views";
+import Image                                      from "next/image";
+import React, {JSX, useEffect, useMemo, useState} from "react";
+
+/**
+ * NowPlayingPanel コンポーネントに必要なプロパティを表します。
+ */
 type NowPlayingPanelProps = {
   nowPlayingID: number;
   trackViews: readonly TrackView[];
@@ -12,18 +16,47 @@ type NowPlayingPanelProps = {
   playActions: PlayActions;
 };
 
+/**
+ * 指定されたファイルパスからベース名（最後の部分）を抽出します。
+ *
+ * この関数はファイルパスをパラメータとして受け取り、ディレクトリ区切り文字「/」で構成要素に分割し、パスの最後のセグメントを返します。
+ * 渡されたパスに有効なセグメントが含まれていない場合、元のパスが返されます。
+ *
+ * @param {string} path - ベース名を抽出するファイルパス。
+ * @returns {string} ベース名、または有効なセグメントが見つからない場合は元のパス。
+ */
 const getBasename = (path: string): string => {
   const parts = path.split("/").filter(Boolean);
   return parts[parts.length - 1] ?? path;
 };
 
+/**
+ * 指定されたファイルパスからディレクトリ名を抽出して返します。
+ *
+ * この関数は、ファイルパスを表す文字列を受け取り、ファイル名または指定されたパスの最後のセグメントを除去することで親ディレクトリを返します。
+ * パスが単一のセグメントのみを含む場合、または空の場合、空の文字列が返されます。
+ *
+ * @param {string} path - ディレクトリ名を抽出するファイルパス。
+ * @returns {string} パスから抽出されたディレクトリ名。パスに親ディレクトリが含まれていない場合は空文字列。
+ */
 const getDirname = (path: string): string => {
   const parts = path.split("/").filter(Boolean);
   if (parts.length <= 1) return "";
   return parts.slice(0, -1).join("/");
 };
 
-export function NowPlayingPanel(props: NowPlayingPanelProps) {
+/**
+ * 現在再生中のトラック情報を表示し、再生、一時停止、スキップ、前のトラックボタンなどの再生コントロールを提供する
+ * 「再生中」パネルとして機能するReactコンポーネント。
+ *
+ * @param {Object} props - このコンポーネントに必要なプロパティ。
+ * @param {string} props.nowPlayingID - 現在再生中のトラックのID。
+ * @param {Array} props.trackViews - 各トラックの詳細を含むトラックビューオブジェクトのリスト。
+ * @param {Object} props.audioRef - オーディオ再生に使用される HTMLAudioElement を指す React ref オブジェクト。
+ * @param {Object} props.playActions - 再生コントロール用のアクション（例: playPrev, playNext）を含むオブジェクト。
+ * @return {JSX.Element} 「再生中」パネルをレンダリングする JSX Element。
+ */
+export function NowPlayingPanel(props: NowPlayingPanelProps): JSX.Element {
   const {
     nowPlayingID,
     trackViews,
@@ -208,7 +241,15 @@ export function NowPlayingPanel(props: NowPlayingPanelProps) {
   );
 }
 
-function InfoRow(props: { label: string; value: string }) {
+/**
+ * ラベルと値を持つ情報の行を表示する機能コンポーネント。
+ *
+ * @param {Object} props - プロパティオブジェクト。
+ * @param {string} props.label - 表示するラベルテキスト。
+ * @param {string} props.value - 表示する値テキスト。
+ * @return {JSX.Element} ラベルと値を含むスタイル付き行。
+ */
+function InfoRow(props: { label: string; value: string }): JSX.Element {
   const {label, value} = props;
   return (
     <div style={{display: "grid", gridTemplateColumns: "72px 1fr", gap: 10, minWidth: 0}}>

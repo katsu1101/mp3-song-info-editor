@@ -1,6 +1,9 @@
 // src/types/file-system-access.d.ts
-export {};
 
+/**
+ * ファイルシステムへのアクセス権限モードを表します。
+ * オプションには、読み取り専用アクセス用の「read」と、読み書きアクセス用の「readwrite」が含まれます。
+ */
 declare global {
   type FileSystemPermissionMode = "read" | "readwrite";
 

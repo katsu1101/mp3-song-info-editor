@@ -1,12 +1,4 @@
-export type Mp3Meta = {
-  title?: string;
-  artist?: string;
-  album?: string;
-  trackNo?: number;
-  year?: number;
-  picture?: { data: Uint8Array; format: string };
-  coverUrl?: string; // 互換用
-};
+import {Mp3Meta} from "@/types/mp3";
 
 export const readMp3Meta = async (file: File): Promise<Mp3Meta> => {
   // ブラウザ側でだけ読み込ませる（SSRの巻き込みを避ける）
