@@ -49,10 +49,23 @@
     display: none;
 }
 
+.playerSheet {
+    display: none;
+}
+
+.miniPlayerBar {
+    display: none;
+}
+
 /* タブレット：sidebarはドロワー、main + playerは維持（player幅は可変でOK） */
 @media (max-width: 1024px) {
+    :root {
+        --mini-player-height: 76px;
+        --mini-player-gap: 18px;
+        --mini-player-bottom: calc(var(--mini-player-gap) + env(safe-area-inset-bottom, 0px));
+    }
     .body {
-        grid-template-columns: minmax(0, 1fr) clamp(260px, 34vw, 480px);
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .sidebarToggle {
@@ -92,28 +105,6 @@
     .backdrop[data-open="true"] {
         opacity: 1;
         pointer-events: auto;
-    }
-}
-
-.playerSheet {
-    display: none;
-}
-
-.miniPlayerBar {
-    display: none;
-}
-
-/* ===== スマホ：main 1本 + ミニプレイヤー固定 + フルはボトムシート ===== */
-@media (max-width: 740px) {
-    :root {
-        --mini-player-height: 76px;
-        --mini-player-gap: 18px;
-        --mini-player-bottom: calc(var(--mini-player-gap) + env(safe-area-inset-bottom, 0px));
-    }
-
-    .body {
-        grid-template-columns: minmax(0, 1fr);
-        /*padding-bottom: calc(var(--mini-player-height) + var(--mini-player-bottom));*/
     }
 
     /* 右ペインはスマホでは使わない */
