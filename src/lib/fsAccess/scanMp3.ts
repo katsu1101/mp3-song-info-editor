@@ -31,7 +31,8 @@ export const readMp3FromDirectory = async (
     const currentPath = basePath ? `${basePath}/${name}` : name;
 
     if (handle.kind === "file") {
-      if (!name.toLowerCase().endsWith(".mp3")) continue;
+      if (!name.toLowerCase().endsWith(".mp3")
+        && !name.toLowerCase().endsWith(".m4a")) continue;
 
       const fileHandle = handle as FileSystemFileHandle;
       const file = await fileHandle.getFile();

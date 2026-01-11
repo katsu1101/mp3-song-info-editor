@@ -57,11 +57,12 @@ export function TrackList(props: TrackListProps): JSX.Element {
     });
   }, [nowPlayingID]);
 
-  return !settingAction.folderName && trackViews.length === 0 ? (
+  return !settingAction.folderName ? (
     <EmptyStateFolderActions settingAction={settingAction}/>
-  ) : (
+  ) : trackViews.length === 0 ?
+    <>読み込み中</>
+    :(
     <section>
-
       <div
         data-scroll="song-list"
         style={{
@@ -92,7 +93,6 @@ export function TrackList(props: TrackListProps): JSX.Element {
             ]}
           </colgroup>
 
-
           <thead>
           <tr style={{borderBottom: "1px solid var(--list-border)"}}>
             <th style={{...thStyle, textAlign: "right"}}></th>
@@ -119,7 +119,6 @@ export function TrackList(props: TrackListProps): JSX.Element {
 
         </table>
       </div>
-      )
     </section>
   );
 }
