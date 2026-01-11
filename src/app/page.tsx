@@ -84,6 +84,7 @@ export default function Page(): JSX.Element {
             playActions={playActions}
             nowPlayingID={nowPlayingID}
             isPlaying={isPlaying}
+            settingAction={settingAction}
           />
         </>
       }

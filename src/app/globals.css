@@ -68,6 +68,13 @@
     --sheet-handle: rgba(0, 0, 0, 0.20);
     --sheet-close-bg: var(--elev-bg);
     --sheet-close-border: var(--elev-border);
+
+    /* Warning callout（ライト） */
+    --warn-bg: rgba(255, 193, 7, 0.12);
+    --warn-border: rgba(255, 193, 7, 0.28);
+    --warn-bar: rgba(255, 193, 7, 0.70);
+    --warn-title: var(--foreground);
+    --warn-text: rgba(0, 0, 0, 0.75);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -130,6 +137,13 @@
         --sheet-handle: rgba(255, 255, 255, 0.22);
         --sheet-close-bg: var(--elev-bg);
         --sheet-close-border: var(--elev-border);
+
+        /* Warning callout（ダーク） */
+        --warn-bg: rgba(255, 193, 7, 0.10);
+        --warn-border: rgba(255, 193, 7, 0.22);
+        --warn-bar: rgba(255, 193, 7, 0.60);
+        --warn-title: var(--foreground);
+        --warn-text: rgba(255, 255, 255, 0.78);
     }
 }
 

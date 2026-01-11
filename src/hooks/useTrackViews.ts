@@ -1,11 +1,11 @@
-import {getDirname}      from "@/lib/path/getDirname";
-import {TrackMetaByPath} from "@/types/trackMeta";
-
+import {getBasename}             from "@/components/NowPlayingPanel";
 import {extractPrefixIdFromPath} from "@/lib/mapping/extractPrefixId";
+import {getDirname}              from "@/lib/path/getDirname";
 import {buildReleaseOrderLabel}  from "@/lib/playlist/label";
 import {FantiaMappingEntry}      from "@/types/fantia";
 import {Covers}                  from "@/types/mp3";
 import type {Mp3Entry}           from "@/types/mp3Entry";
+import {TrackMetaByPath}         from "@/types/trackMeta";
 import {TrackView}               from "@/types/views";
 
 /**
@@ -87,7 +87,8 @@ export const useTrackViews = (args: UseTrackViewsArgs): TrackView[] => {
     const prefixId = extractPrefixIdFromPath(item.path);
     const mapping = prefixId ? mappingByPrefixId.get(prefixId) : undefined;
 
-    const displayTitle = mapping?.title ?? meta?.title ?? "（曲名なし）";
+    const filename = getBasename(item.path);
+    const displayTitle = mapping?.title ?? meta?.title ?? filename;
 
     const albumName = meta?.album ?? null;
     const trackNo = meta?.trackNo ?? null;

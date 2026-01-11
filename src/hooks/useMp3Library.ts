@@ -289,15 +289,17 @@ export const useMp3Library = (shuffle: boolean) => {
 
   // ✅ フォルダ選択（ここで保存）
   const pickFolderAndLoad = async () => {
+
+    const error = ensureDirectoryPicker();
+    if (error) {
+      setErrorMessage(error);
+      return;
+    }
+
     resetView();
     setNeedsReconnect(false);
 
     try {
-      if (!("showDirectoryPicker" in window)) {
-        setErrorMessage("このブラウザはフォルダ選択に対応していません。Chrome/Edgeでお試しください。");
-        return;
-      }
-
       const handle: FileSystemDirectoryHandle = await window.showDirectoryPicker({mode: "read"});
 
       await saveDirectoryHandle(handle);
@@ -402,4 +404,19 @@ export const useOrderedMp3List = (
   }, [fingerprint, mp3List, shuffle, shuffleVersion]);
 
   return ordered;
+}
+
+export const ensureDirectoryPicker = (): string | null => {
+
+  if (typeof window === "undefined") return null;
+
+  if (!window.isSecureContext) {
+    return "HTTPSで開いてください（セキュアな接続が必要です）。";
+  }
+
+  if (typeof (window).showDirectoryPicker !== "function") {
+    return "このブラウザはフォルダ選択に対応していません。Chrome/Edgeでお試しください。";
+  }
+
+  return null;
 }

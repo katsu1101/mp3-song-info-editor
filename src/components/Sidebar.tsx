@@ -21,7 +21,6 @@ export function SidebarStub({settingAction}: SidebarMenuProps): React.JSX.Elemen
 
   return (
     <div className="grid gap-4">
-      <SectionTitle>フォルダ</SectionTitle>
       <SideButton onClick={settingAction.pickFolderAndLoad}>フォルダを選ぶ</SideButton>
 
       {settingAction.savedHandle && settingAction.needsReconnect ? (
@@ -118,7 +117,6 @@ function ToggleRow(props: {
     </label>
   );
 }
-
 
 function SideButton(
   props: {

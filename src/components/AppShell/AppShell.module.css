@@ -68,6 +68,14 @@
     display: none;
 }
 
+.drawerTitle {
+    display: none;
+}
+
+.drawerClose {
+    display: none;
+}
+
 /* タブレット：sidebarはドロワー、main + playerは維持（player幅は可変でOK） */
 @media (max-width: 1024px) {
     :root {
@@ -75,6 +83,7 @@
         --mini-player-gap: 18px;
         --mini-player-bottom: calc(var(--mini-player-gap) + env(safe-area-inset-bottom, 0px));
     }
+
     .body {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -82,7 +91,6 @@
     /*.sidebarToggle {*/
     /*    display: inline-flex;*/
     /*}*/
-
     .sidebarPane {
         position: fixed;
         top: 0;
@@ -123,7 +131,9 @@
         cursor: pointer;
     }
 
-    .drawerClose:hover { background: var(--panel-hover); }
+    .drawerClose:hover {
+        background: var(--panel-hover);
+    }
 
     .drawerSub {
         font-size: 12px;
@@ -131,7 +141,9 @@
         margin-top: 2px;
     }
 
-    .sidebarToggle { display: inline-flex; }
+    .sidebarToggle {
+        display: inline-flex;
+    }
 
     .sidebarPane[data-open="true"] {
         transform: translateX(0);

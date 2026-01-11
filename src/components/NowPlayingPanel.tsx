@@ -27,7 +27,7 @@ type NowPlayingPanelProps = {
  * @param {string} path - ベース名を抽出するファイルパス。
  * @returns {string} ベース名、または有効なセグメントが見つからない場合は元のパス。
  */
-const getBasename = (path: string): string => {
+export const getBasename = (path: string): string => {
   const parts = path.split("/").filter(Boolean);
   return parts[parts.length - 1] ?? path;
 };
