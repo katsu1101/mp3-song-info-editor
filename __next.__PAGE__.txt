@@ -1,0 +1,10 @@
+1:"$Sreact.fragment"
+2:I[99146,["/mp3-song-info-editor/_next/static/chunks/483a12865e0bba97.js","/mp3-song-info-editor/_next/static/chunks/1d3be43a6dda29b7.js"],"ClientPageRoot"]
+3:I[52683,["/mp3-song-info-editor/_next/static/chunks/3dafe0e2a413b659.js","/mp3-song-info-editor/_next/static/chunks/1390cd9039c10846.js","/mp3-song-info-editor/_next/static/chunks/2f592ed75d34e1ee.js"],"default"]
+6:I[2718,["/mp3-song-info-editor/_next/static/chunks/483a12865e0bba97.js","/mp3-song-info-editor/_next/static/chunks/1d3be43a6dda29b7.js"],"OutletBoundary"]
+7:"$Sreact.suspense"
+:HL["/mp3-song-info-editor/_next/static/chunks/2e45559fb1d18f03.css","style"]
+0:{"buildId":"Yi54-Zompz5neEqc-AEhI","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","link","0",{"rel":"stylesheet","href":"/mp3-song-info-editor/_next/static/chunks/2e45559fb1d18f03.css","precedence":"next"}],["$","script","script-0",{"src":"/mp3-song-info-editor/_next/static/chunks/1390cd9039c10846.js","async":true}],["$","script","script-1",{"src":"/mp3-song-info-editor/_next/static/chunks/2f592ed75d34e1ee.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+4:{}
+5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
+8:null
